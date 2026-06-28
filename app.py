@@ -1,5 +1,10 @@
+from pathlib import Path
+
 import streamlit as st
 
+
+
+BASE_DIR = Path(__file__).resolve().parent
 
 st.set_page_config(
     page_title="Limitador de Corrente de Curto-Circuito",
@@ -79,7 +84,7 @@ with col_texto:
 
 with col_imagem:
     st.image(
-        r"G:\Meu Drive\01 - Faculdade\TCC\python\dashboard\imagens\AnaliseDinamica.gif",
+        BASE_DIR / "imagens" / "AnaliseDinamica.gif",
         caption="Campo magnético no domínio do tempo",
         use_container_width=True,
     )

@@ -1,3 +1,4 @@
+from pathlib import Path
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
@@ -8,9 +9,11 @@ st.set_page_config(page_title="Curva B-H e μr", layout="wide")
 
 st.title("Curva B-H e Permeabilidade Relativa")
 
+BASE_DIR = Path(__file__).resolve().parents[1]
+
 # Leitura
 df = pd.read_csv(
-    r"G:\Meu Drive\01 - Faculdade\TCC\python\dashboard\Dataset\Curva_B_H_Sem_Perdas.txt",
+    BASE_DIR / "Dataset" / "Curva_B_H_Sem_Perdas.txt",
     sep=r"\s+",
     engine="python"
 )

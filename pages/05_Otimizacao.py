@@ -222,6 +222,34 @@ if dados_analise.empty:
 
 with st.sidebar:
     st.header("Filtros")
+    st.subheader("Resultados")
+    minimo_tensao_filtro = float(dados_analise[COLUNA_TENSAO].min())
+    maximo_tensao_filtro = float(dados_analise[COLUNA_TENSAO].max())
+    minimo_corrente_filtro = float(dados_analise[COLUNA_CORRENTE].min())
+    maximo_corrente_filtro = float(dados_analise[COLUNA_CORRENTE].max())
+
+    filtro_tensao = st.slider(
+        "Queda de tensão (V)",
+        min_value=round(minimo_tensao_filtro, 1),
+        max_value=round(maximo_tensao_filtro, 1),
+        value=(
+            round(minimo_tensao_filtro, 1),
+            round(maximo_tensao_filtro, 1),
+        ),
+        step=0.1,
+    )
+    filtro_corrente = st.slider(
+        "Corrente de curto (A)",
+        min_value=round(minimo_corrente_filtro, 1),
+        max_value=round(maximo_corrente_filtro, 1),
+        value=(
+            round(minimo_corrente_filtro, 1),
+            round(maximo_corrente_filtro, 1),
+        ),
+        step=0.1,
+    )
+
+    st.divider()
     st.subheader("Parâmetros")
 
     valores_h = sorted(dados_analise["H (cm)"].unique())
@@ -358,6 +386,8 @@ dados_filtrados = dados_analise[
     & dados_analise["W (cm)"].isin(filtro_w)
     & dados_analise["N_DC"].isin(filtro_n_dc)
     & dados_analise["N_AC"].isin(filtro_n_ac)
+    & dados_analise[COLUNA_TENSAO].between(*filtro_tensao)
+    & dados_analise[COLUNA_CORRENTE].between(*filtro_corrente)
 ].copy()
 
 if dados_filtrados.empty:
