@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
 
 
 st.set_page_config(
@@ -18,7 +17,7 @@ st.caption("Relação entre queda de tensão e corrente de curto-circuito")
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-PASTA_DADOS = BASE_DIR / "Dataset" / "otimization 2.0"
+PASTA_DADOS = BASE_DIR / "Dataset" / "optimization"
 
 COLUNA_TEMPO = "Time (s)"
 COLUNA_CORRENTE = "Corrente de Curto (A)"

@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 
 # Leitura
 df = pd.read_csv(
-    BASE_DIR / "Dataset" / "Curva_B_H_Sem_Perdas.txt",
+    BASE_DIR / "Dataset" / "b_h_curve" / "Curva_B_H_Sem_Perdas.txt",
     sep=r"\s+",
     engine="python"
 )

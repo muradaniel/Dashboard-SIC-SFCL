@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Windows / Google Drive metadata
+desktop.ini
+Thumbs.db
+
+# Local/editor files
+.ipynb_checkpoints/
+.env
+.venv/
+venv/
