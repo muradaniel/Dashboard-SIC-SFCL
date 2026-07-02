@@ -1,4 +1,4 @@
-from pathlib import Path
+from io import BytesIO
 
 import numpy as np
 import pandas as pd
@@ -7,14 +7,12 @@ import streamlit as st
 
 
 st.set_page_config(
-    page_title="Análise RMS",
+    page_title="Analise RMS",
     layout="wide",
 )
 
-st.title("Análise RMS de Sinais Elétricos")
+st.title("Analise RMS de Sinais Eletricos")
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-PASTA_DADOS = BASE_DIR / "Dataset" / "optimization"
 
 COLUNAS_TXT = [
     "H (cm)",
@@ -29,9 +27,9 @@ COLUNA_CHAVE = "Chave"
 
 
 @st.cache_data(show_spinner="Carregando arquivo TXT...")
-def carregar_txt(caminho, data_modificacao):
+def carregar_txt(conteudo_arquivo):
     dados = pd.read_csv(
-        caminho,
+        BytesIO(conteudo_arquivo),
         sep=r"\s{2,}",
         engine="python",
         comment="%",
@@ -55,39 +53,31 @@ def carregar_txt(caminho, data_modificacao):
     return dados
 
 
-if not PASTA_DADOS.exists():
-    st.error(f"Pasta de dados não encontrada: {PASTA_DADOS}")
+arquivo_txt = st.file_uploader(
+    "Selecione um arquivo TXT exportado do COMSOL",
+    type=["txt"],
+)
+
+if arquivo_txt is None:
+    st.warning("Selecione um arquivo TXT para iniciar a analise.")
     st.stop()
 
-arquivos_txt = tuple(sorted(PASTA_DADOS.glob("*.txt")))
-
-if not arquivos_txt:
-    st.error(f"Nenhum arquivo TXT encontrado em: {PASTA_DADOS}")
-    st.stop()
-
-nomes_arquivos = [arquivo.name for arquivo in arquivos_txt]
-arquivos_por_nome = dict(zip(nomes_arquivos, arquivos_txt))
-
-with st.sidebar:
-    st.header("Entrada")
-    nome_arquivo = st.selectbox("Arquivo TXT", nomes_arquivos)
-
-arquivo = arquivos_por_nome[nome_arquivo]
+nome_arquivo = arquivo_txt.name
 
 try:
-    dados = carregar_txt(arquivo, arquivo.stat().st_mtime_ns)
+    dados = carregar_txt(arquivo_txt.getvalue())
 except Exception as erro:
     st.error(f"Erro ao ler o arquivo TXT: {erro}")
     st.stop()
 
 if dados.empty:
-    st.warning("O arquivo selecionado não possui dados válidos.")
+    st.warning("O arquivo selecionado nao possui dados validos.")
     st.stop()
 
 with st.sidebar:
-    st.subheader("Seleção dos dados")
+    st.subheader("Selecao dos dados")
     chaves = sorted(dados[COLUNA_CHAVE].unique())
-    chave_selecionada = st.selectbox("Combinação", chaves)
+    chave_selecionada = st.selectbox("Combinacao", chaves)
 
     colunas_numericas = COLUNAS_TXT.copy()
     indice_tempo = colunas_numericas.index("Time (s)")
@@ -124,7 +114,7 @@ tempo = tempo[mascara_valida]
 sinal = sinal[mascara_valida]
 
 if len(tempo) < 2:
-    st.error("A combinação precisa ter pelo menos dois pontos válidos de tempo e sinal.")
+    st.error("A combinacao precisa ter pelo menos dois pontos validos de tempo e sinal.")
     st.stop()
 
 ordem = np.argsort(tempo)
@@ -134,7 +124,7 @@ sinal = sinal[ordem]
 rms_total = np.sqrt(np.mean(sinal ** 2))
 rms_total_linha = np.full_like(sinal, rms_total)
 
-st.success(f"Arquivo carregado: {nome_arquivo} | Combinação: {chave_selecionada}")
+st.success(f"Arquivo carregado: {nome_arquivo} | Combinacao: {chave_selecionada}")
 
 col1, col2, col3 = st.columns(3)
 col1.metric("Valor RMS total", f"{rms_total:.2f}")
@@ -171,7 +161,7 @@ fig.add_trace(
     )
 )
 fig.update_layout(
-    title="Análise RMS do sinal selecionado",
+    title="Analise RMS do sinal selecionado",
     xaxis_title=coluna_tempo,
     yaxis_title=coluna_sinal,
     hovermode="x unified",

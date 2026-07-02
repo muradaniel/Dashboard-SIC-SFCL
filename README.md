@@ -16,25 +16,20 @@ A aplicacao centraliza visualizacoes e calculos usados no estudo do limitador:
 
 ```text
 dashboard/
-├── app.py
-├── requirements.txt
-├── pages/
-│   ├── 02_Curva_BH.py
-│   ├── 03_RMS.py
-│   ├── 04_Harmonicos.py
-│   └── 05_Otimizacao.py
-├── Dataset/
-│   ├── b_h_curve/
-│   │   └── Curva_B_H_Sem_Perdas.txt
-│   ├── harmonics/
-│   │   ├── Corrente FFT.csv
-│   │   └── Corrente FFT2.csv
-│   ├── root_mean_square/
-│   │   └── Tensão RMS.csv
-│   └── optimization/
-│       └── *.txt
-└── imagens/
-    └── AnaliseDinamica.gif
+|-- app.py
+|-- requirements.txt
+|-- pages/
+|   |-- 02_Curva_BH.py
+|   |-- 03_RMS.py
+|   |-- 04_Harmonicos.py
+|   `-- 05_Otimizacao.py
+|-- Dataset/
+|   |-- b_h_curve/
+|   |   `-- Curva_B_H_Sem_Perdas.txt
+|   `-- optimization/
+|       `-- *.txt
+`-- imagens/
+    `-- AnaliseDinamica.gif
 ```
 
 ## Dependencias
@@ -53,6 +48,7 @@ Principais bibliotecas:
 - plotly
 - scipy
 - openpyxl
+- scikit-learn
 
 ## Como executar
 
@@ -62,7 +58,7 @@ streamlit run app.py
 
 ## Caminhos dos dados
 
-Os arquivos locais sao acessados por caminhos relativos com `pathlib.Path`, o que permite executar o app localmente e tambem no Streamlit Cloud.
+Os arquivos locais da aplicacao sao acessados por caminhos relativos com `pathlib.Path`, o que permite executar o app localmente e tambem no Streamlit Cloud.
 
 Exemplos:
 
@@ -71,6 +67,8 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 arquivo_bh = BASE_DIR / "Dataset" / "b_h_curve" / "Curva_B_H_Sem_Perdas.txt"
 pasta_otimizacao = BASE_DIR / "Dataset" / "optimization"
 ```
+
+As paginas RMS e Harmonicos nao monitoram uma pasta fixa. Elas aguardam o usuario selecionar manualmente um arquivo `.txt` exportado do COMSOL.
 
 ## Paginas
 
@@ -90,19 +88,19 @@ Le `Dataset/b_h_curve/Curva_B_H_Sem_Perdas.txt`, calcula a permeabilidade relati
 
 Arquivo: `pages/03_RMS.py`
 
-Le arquivos TXT de `Dataset/optimization`, permite escolher a combinacao e as colunas de tempo/sinal, calcula o RMS total e plota o sinal com linha de RMS.
+Aguarda o envio manual de um arquivo TXT exportado do COMSOL pelo seletor de arquivos. Depois do carregamento, permite escolher a combinacao e as colunas de tempo/sinal, calcula o RMS total e plota o sinal com linha de RMS.
 
 ### 4. Harmonicos
 
 Arquivo: `pages/04_Harmonicos.py`
 
-Le arquivos TXT de `Dataset/optimization`, permite escolher a combinacao e as colunas de tempo/sinal, calcula FFT, amplitudes RMS por harmonico e percentual em relacao ao harmonico fundamental `n = 1`.
+Aguarda o envio manual de um arquivo TXT exportado do COMSOL pelo seletor de arquivos. Depois do carregamento, permite escolher a combinacao e as colunas de tempo/sinal, calcula FFT, amplitudes RMS por harmonico e percentual em relacao ao harmonico fundamental `n = 1`.
 
 ### 5. Otimizacao
 
 Arquivo: `pages/05_Otimizacao.py`
 
-Le arquivos `.txt` em `Dataset/optimization`, consolida maximos de queda de tensao e corrente de curto em janelas de tempo especificas e exibe a analise de viabilidade.
+Le arquivos `.txt` em `Dataset/optimization`, consolida maximos de queda de tensao e corrente de curto em janelas de tempo especificas, exibe a analise de viabilidade e inclui uma analise opcional de sensibilidade por modelo.
 
 Filtros principais:
 

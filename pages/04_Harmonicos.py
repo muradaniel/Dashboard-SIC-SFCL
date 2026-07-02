@@ -1,4 +1,4 @@
-from pathlib import Path
+from io import BytesIO
 
 import numpy as np
 import pandas as pd
@@ -6,11 +6,9 @@ import plotly.graph_objects as go
 import streamlit as st
 
 
-st.set_page_config(page_title="Análise de Harmônicos", layout="wide")
-st.title("Análise de Harmônicos - FFT")
+st.set_page_config(page_title="Analise de Harmonicos", layout="wide")
+st.title("Analise de Harmonicos - FFT")
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-PASTA_DADOS = BASE_DIR / "Dataset" / "optimization"
 
 COLUNAS_TXT = [
     "H (cm)",
@@ -25,9 +23,9 @@ COLUNA_CHAVE = "Chave"
 
 
 @st.cache_data(show_spinner="Carregando arquivo TXT...")
-def carregar_txt(caminho, data_modificacao):
+def carregar_txt(conteudo_arquivo):
     dados = pd.read_csv(
-        caminho,
+        BytesIO(conteudo_arquivo),
         sep=r"\s{2,}",
         engine="python",
         comment="%",
@@ -51,39 +49,31 @@ def carregar_txt(caminho, data_modificacao):
     return dados
 
 
-if not PASTA_DADOS.exists():
-    st.error(f"Pasta de dados não encontrada: {PASTA_DADOS}")
+arquivo_txt = st.file_uploader(
+    "Selecione um arquivo TXT exportado do COMSOL",
+    type=["txt"],
+)
+
+if arquivo_txt is None:
+    st.warning("Selecione um arquivo TXT para iniciar a analise.")
     st.stop()
 
-arquivos_txt = tuple(sorted(PASTA_DADOS.glob("*.txt")))
-
-if not arquivos_txt:
-    st.error(f"Nenhum arquivo TXT encontrado em: {PASTA_DADOS}")
-    st.stop()
-
-nomes_arquivos = [arquivo.name for arquivo in arquivos_txt]
-arquivos_por_nome = dict(zip(nomes_arquivos, arquivos_txt))
-
-with st.sidebar:
-    st.header("Entrada")
-    nome_arquivo = st.selectbox("Arquivo TXT", nomes_arquivos)
-
-arquivo = arquivos_por_nome[nome_arquivo]
+nome_arquivo = arquivo_txt.name
 
 try:
-    sinal = carregar_txt(arquivo, arquivo.stat().st_mtime_ns)
+    sinal = carregar_txt(arquivo_txt.getvalue())
 except Exception as erro:
     st.error(f"Erro ao ler o arquivo TXT: {erro}")
     st.stop()
 
 if sinal.empty:
-    st.warning("O arquivo selecionado não possui dados válidos.")
+    st.warning("O arquivo selecionado nao possui dados validos.")
     st.stop()
 
 with st.sidebar:
-    st.subheader("Seleção dos dados")
+    st.subheader("Selecao dos dados")
     chaves = sorted(sinal[COLUNA_CHAVE].unique())
-    chave_selecionada = st.selectbox("Combinação", chaves)
+    chave_selecionada = st.selectbox("Combinacao", chaves)
 
     colunas_numericas = COLUNAS_TXT.copy()
     coluna_tempo = st.selectbox(
@@ -99,14 +89,14 @@ with st.sidebar:
 
     st.subheader("FFT")
     limite_freq = st.number_input(
-        "Limite de frequência exibida [Hz]",
+        "Limite de frequencia exibida [Hz]",
         min_value=1,
         max_value=10000,
         value=1600,
         step=100,
     )
     frequencia_fundamental = st.number_input(
-        "Frequência fundamental [Hz]",
+        "Frequencia fundamental [Hz]",
         min_value=1.0,
         max_value=1000.0,
         value=60.0,
@@ -114,7 +104,7 @@ with st.sidebar:
         format="%.2f",
     )
     amplitude_minima = st.number_input(
-        "Amplitude mínima para destacar picos [RMS]",
+        "Amplitude minima para destacar picos [RMS]",
         min_value=0.0,
         value=0.10,
         step=0.01,
@@ -137,7 +127,7 @@ tempo = tempo[mascara_valida]
 vout = vout[mascara_valida]
 
 if len(tempo) < 2:
-    st.error("A combinação precisa ter pelo menos dois pontos válidos.")
+    st.error("A combinacao precisa ter pelo menos dois pontos validos.")
     st.stop()
 
 ordem = np.argsort(tempo)
@@ -189,7 +179,7 @@ rms_picos = rms_harmonicas[mascara_picos]
 harmonicos_picos = harmonicos[mascara_picos]
 percentual_picos = percentual_harmonicas[mascara_picos]
 
-st.success(f"Arquivo carregado: {nome_arquivo} | Combinação: {chave_selecionada}")
+st.success(f"Arquivo carregado: {nome_arquivo} | Combinacao: {chave_selecionada}")
 
 col1, col2, col3 = st.columns(3)
 col1.metric("Pontos analisados", N)
@@ -201,11 +191,11 @@ fig_fft.add_trace(
     go.Bar(
         x=freq_harmonicas,
         y=rms_harmonicas,
-        name="Harmônicos RMS",
+        name="Harmonicos RMS",
         width=frequencia_fundamental * 0.35,
         hovertemplate=(
-            "Harmônico: %{customdata}ª<br>"
-            "Frequência: %{x:.2f} Hz<br>"
+            "Harmonico: %{customdata}<br>"
+            "Frequencia: %{x:.2f} Hz<br>"
             "Amplitude RMS: %{y:.6f}<br>"
             "Percentual: %{text:.2f}%<extra></extra>"
         ),
@@ -218,9 +208,9 @@ fig_fft.add_trace(
         x=freq_picos,
         y=rms_picos,
         mode="markers+text",
-        name=f"Componentes ≥ {amplitude_minima:.4f} RMS",
+        name=f"Componentes >= {amplitude_minima:.4f} RMS",
         text=[
-            f"{int(h)}ª<br>{f:.0f} Hz<br>{a:.4f} RMS<br>{p:.2f}%"
+            f"n={int(h)}<br>{f:.0f} Hz<br>{a:.4f} RMS<br>{p:.2f}%"
             for h, f, a, p in zip(
                 harmonicos_picos,
                 freq_picos,
@@ -231,7 +221,7 @@ fig_fft.add_trace(
         textposition="top center",
         marker=dict(size=9),
         hovertemplate=(
-            "Frequência: %{x:.2f} Hz<br>"
+            "Frequencia: %{x:.2f} Hz<br>"
             "Amplitude RMS: %{y:.6f}<br>"
             "Percentual: %{customdata:.2f}%<extra></extra>"
         ),
@@ -239,8 +229,8 @@ fig_fft.add_trace(
     )
 )
 fig_fft.update_layout(
-    title="Transformada Rápida de Fourier - Harmônicos em RMS",
-    xaxis_title="Frequência harmônica [Hz]",
+    title="Transformada Rapida de Fourier - Harmonicos em RMS",
+    xaxis_title="Frequencia harmonica [Hz]",
     yaxis_title="Amplitude RMS",
     hovermode="x unified",
     template="plotly_white",
@@ -257,23 +247,23 @@ fig_fft.update_yaxes(showgrid=True)
 st.plotly_chart(fig_fft, use_container_width=True)
 
 dados_fft = pd.DataFrame({
-    "Harmônico": harmonicos,
-    "Frequência [Hz]": freq_harmonicas,
+    "Harmonico": harmonicos,
+    "Frequencia [Hz]": freq_harmonicas,
     "Amplitude RMS": rms_harmonicas,
-    "Percentual em relação ao n=1 [%]": percentual_harmonicas,
+    "Percentual em relacao ao n=1 [%]": percentual_harmonicas,
 })
 
 st.dataframe(
     dados_fft.style.format({
-        "Frequência [Hz]": "{:.2f}",
+        "Frequencia [Hz]": "{:.2f}",
         "Amplitude RMS": "{:.6f}",
-        "Percentual em relação ao n=1 [%]": "{:.2f}",
+        "Percentual em relacao ao n=1 [%]": "{:.2f}",
     }),
     use_container_width=True,
     hide_index=True,
 )
 
-st.subheader("Sinal selecionado no domínio do tempo")
+st.subheader("Sinal selecionado no dominio do tempo")
 
 fig_sinal = go.Figure()
 fig_sinal.add_trace(

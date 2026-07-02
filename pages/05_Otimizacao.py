@@ -5,6 +5,11 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from sklearn.linear_model import Ridge
+from sklearn.metrics import r2_score
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 
 st.set_page_config(
@@ -804,3 +809,236 @@ if mostrar_small_multiples:
                 figura_small,
                 use_container_width=True,
             )
+st.divider()
+mostrar_sensibilidade_modelo = st.checkbox(
+    "Mostrar nova analise de sensibilidade por modelo",
+    value=False,
+)
+
+if mostrar_sensibilidade_modelo:
+    st.subheader("Analise de sensibilidade por modelo")
+    st.caption(
+        "O modelo Ridge e treinado com todas as simulacoes carregadas. "
+        "A tabela por simulacao abaixo respeita os filtros atuais do dashboard."
+    )
+
+    dados_modelo = dados_analise[
+        [*COLUNAS_PARAMETROS, COLUNA_CORRENTE, COLUNA_TENSAO, COLUNA_CHAVE]
+    ].dropna().copy()
+
+    if len(dados_modelo) < 8:
+        st.warning(
+            "A analise precisa de pelo menos 8 simulacoes validas para treinar "
+            "um modelo com sensibilidade minimamente util."
+        )
+    else:
+        X_modelo = dados_modelo[COLUNAS_PARAMETROS].astype(float)
+        y_corrente = dados_modelo[COLUNA_CORRENTE].astype(float)
+        y_tensao = dados_modelo[COLUNA_TENSAO].astype(float)
+
+        def treinar_modelo_alvo(X, y):
+            modelo_final = make_pipeline(
+                StandardScaler(),
+                Ridge(alpha=1.0),
+            )
+            modelo_final.fit(X, y)
+
+            if len(X) >= 20:
+                X_treino, X_teste, y_treino, y_teste = train_test_split(
+                    X,
+                    y,
+                    test_size=0.25,
+                    random_state=42,
+                )
+                modelo_validacao = make_pipeline(
+                    StandardScaler(),
+                    Ridge(alpha=1.0),
+                )
+                modelo_validacao.fit(X_treino, y_treino)
+                r2 = r2_score(y_teste, modelo_validacao.predict(X_teste))
+                tipo_r2 = "R2 validacao"
+            else:
+                r2 = r2_score(y, modelo_final.predict(X))
+                tipo_r2 = "R2 treino"
+
+            coeficientes = modelo_final.named_steps["ridge"].coef_
+            valores_importancia = np.abs(coeficientes)
+            soma_importancia = valores_importancia.sum()
+            if soma_importancia > 0:
+                importancia_percentual = valores_importancia / soma_importancia * 100
+            else:
+                importancia_percentual = np.zeros_like(valores_importancia)
+
+            return modelo_final, r2, tipo_r2, coeficientes, importancia_percentual
+
+        modelo_corrente, r2_corrente, tipo_r2_corrente, coef_corrente, imp_corrente = treinar_modelo_alvo(
+            X_modelo,
+            y_corrente,
+        )
+        modelo_tensao, r2_tensao, tipo_r2_tensao, coef_tensao, imp_tensao = treinar_modelo_alvo(
+            X_modelo,
+            y_tensao,
+        )
+
+        sensibilidade_global = pd.DataFrame({
+            "Parametro": COLUNAS_PARAMETROS,
+            "Influencia na corrente [%]": imp_corrente,
+            "Influencia na queda [%]": imp_tensao,
+            "Coeficiente corrente [A/std]": coef_corrente,
+            "Coeficiente queda [V/std]": coef_tensao,
+        })
+        sensibilidade_global["Influencia media [%]"] = (
+            sensibilidade_global["Influencia na corrente [%]"]
+            + sensibilidade_global["Influencia na queda [%]"]
+        ) / 2
+        sensibilidade_global = sensibilidade_global.sort_values(
+            "Influencia media [%]",
+            ascending=False,
+        )
+
+        parametro_corrente = sensibilidade_global.sort_values(
+            "Influencia na corrente [%]",
+            ascending=False,
+        ).iloc[0]
+        parametro_tensao = sensibilidade_global.sort_values(
+            "Influencia na queda [%]",
+            ascending=False,
+        ).iloc[0]
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Simulacoes no treino", len(dados_modelo))
+        c2.metric(tipo_r2_corrente, f"{r2_corrente:.3f}")
+        c3.metric(tipo_r2_tensao, f"{r2_tensao:.3f}")
+        c4.metric(
+            "Parametro mais influente",
+            str(sensibilidade_global.iloc[0]["Parametro"]),
+        )
+
+        c5, c6 = st.columns(2)
+        c5.metric(
+            "Mais influencia a corrente",
+            str(parametro_corrente["Parametro"]),
+            f"{parametro_corrente['Influencia na corrente [%]']:.1f}%",
+            delta_color="off",
+        )
+        c6.metric(
+            "Mais influencia a queda",
+            str(parametro_tensao["Parametro"]),
+            f"{parametro_tensao['Influencia na queda [%]']:.1f}%",
+            delta_color="off",
+        )
+
+        fig_sensibilidade = go.Figure()
+        fig_sensibilidade.add_trace(
+            go.Bar(
+                y=sensibilidade_global["Parametro"],
+                x=sensibilidade_global["Influencia na corrente [%]"],
+                name="Corrente de curto",
+                orientation="h",
+                marker_color="#0B4DDB",
+            )
+        )
+        fig_sensibilidade.add_trace(
+            go.Bar(
+                y=sensibilidade_global["Parametro"],
+                x=sensibilidade_global["Influencia na queda [%]"],
+                name="Queda de tensao",
+                orientation="h",
+                marker_color="#DC2626",
+            )
+        )
+        fig_sensibilidade.update_layout(
+            title="Sensibilidade geral dos parametros",
+            xaxis_title="Influencia relativa dos coeficientes [%]",
+            yaxis_title="Parametro",
+            barmode="group",
+            template="plotly_white",
+            height=430,
+            legend=dict(orientation="h", y=1.08),
+            margin=dict(t=80, r=30, b=55, l=90),
+        )
+        fig_sensibilidade.update_xaxes(showgrid=True, gridcolor="rgba(0,0,0,0.10)")
+        fig_sensibilidade.update_yaxes(autorange="reversed")
+        st.plotly_chart(fig_sensibilidade, use_container_width=True)
+
+        st.subheader("Tabela de sensibilidade geral")
+        st.dataframe(
+            sensibilidade_global.round({
+                "Influencia na corrente [%]": 2,
+                "Influencia na queda [%]": 2,
+                "Coeficiente corrente [A/std]": 4,
+                "Coeficiente queda [V/std]": 4,
+                "Influencia media [%]": 2,
+            }),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        dados_casos = dados_filtrados[
+            [COLUNA_CHAVE, *COLUNAS_PARAMETROS, COLUNA_CORRENTE, COLUNA_TENSAO]
+        ].dropna().copy()
+        X_casos = dados_casos[COLUNAS_PARAMETROS].astype(float)
+        X_casos_padronizado = modelo_corrente.named_steps["standardscaler"].transform(X_casos)
+
+        escala_corrente_sens = max(float(y_corrente.max() - y_corrente.min()), 1.0)
+        escala_tensao_sens = max(float(y_tensao.max() - y_tensao.min()), 1.0)
+        contrib_corrente = X_casos_padronizado * coef_corrente
+        contrib_tensao = X_casos_padronizado * coef_tensao
+        contrib_combinada = (
+            np.abs(contrib_corrente) / escala_corrente_sens
+            + np.abs(contrib_tensao) / escala_tensao_sens
+        )
+
+        linhas_casos = []
+        for indice, (_, caso) in enumerate(dados_casos.iterrows()):
+            ordem_impacto = np.argsort(contrib_combinada[indice])[::-1]
+            indice_corrente = int(np.argmax(np.abs(contrib_corrente[indice])))
+            indice_tensao = int(np.argmax(np.abs(contrib_tensao[indice])))
+            indice_dominante = int(ordem_impacto[0])
+
+            linhas_casos.append({
+                "Chave": caso[COLUNA_CHAVE],
+                "H (cm)": caso["H (cm)"],
+                "W (cm)": caso["W (cm)"],
+                "N_DC": caso["N_DC"],
+                "N_AC": caso["N_AC"],
+                "Corrente real [A]": caso[COLUNA_CORRENTE],
+                "Queda real [V]": caso[COLUNA_TENSAO],
+                "Variavel dominante": COLUNAS_PARAMETROS[indice_dominante],
+                "Ranking de influencia": " > ".join(
+                    COLUNAS_PARAMETROS[i] for i in ordem_impacto
+                ),
+                "Mais afeta corrente": COLUNAS_PARAMETROS[indice_corrente],
+                "Contribuicao corrente [A]": contrib_corrente[indice, indice_corrente],
+                "Mais afeta queda": COLUNAS_PARAMETROS[indice_tensao],
+                "Contribuicao queda [V]": contrib_tensao[indice, indice_tensao],
+                "Impacto combinado": contrib_combinada[indice, indice_dominante],
+            })
+
+        sensibilidade_casos = pd.DataFrame(linhas_casos).sort_values(
+            "Impacto combinado",
+            ascending=False,
+        )
+
+        st.subheader("Sensibilidade especifica por simulacao")
+        sensibilidade_casos_exibicao = sensibilidade_casos.copy()
+        sensibilidade_casos_exibicao["H (cm)"] = sensibilidade_casos_exibicao["H (cm)"].round(0)
+        sensibilidade_casos_exibicao["W (cm)"] = sensibilidade_casos_exibicao["W (cm)"].round(2)
+        sensibilidade_casos_exibicao["N_DC"] = sensibilidade_casos_exibicao["N_DC"].round(0)
+        sensibilidade_casos_exibicao["N_AC"] = sensibilidade_casos_exibicao["N_AC"].round(0)
+        sensibilidade_casos_exibicao["Corrente real [A]"] = sensibilidade_casos_exibicao["Corrente real [A]"].round(2)
+        sensibilidade_casos_exibicao["Queda real [V]"] = sensibilidade_casos_exibicao["Queda real [V]"].round(2)
+        sensibilidade_casos_exibicao["Contribuicao corrente [A]"] = sensibilidade_casos_exibicao["Contribuicao corrente [A]"].round(3)
+        sensibilidade_casos_exibicao["Contribuicao queda [V]"] = sensibilidade_casos_exibicao["Contribuicao queda [V]"].round(3)
+        sensibilidade_casos_exibicao["Impacto combinado"] = sensibilidade_casos_exibicao["Impacto combinado"].round(4)
+        st.dataframe(
+            sensibilidade_casos_exibicao,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        st.info(
+            "Leitura da tabela: o modelo padroniza os parametros e estima a "
+            "contribuicao de cada variavel para corrente e queda em cada simulacao. "
+            "O ranking mostra quais parametros mais pesaram naquele caso filtrado."
+        )
