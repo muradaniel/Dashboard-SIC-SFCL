@@ -26,8 +26,15 @@ COLUNAS_TXT = [
 COLUNA_CHAVE = "Chave"
 
 
+def nome_sinal_sintetico(nome_arquivo):
+    nome = nome_arquivo.lower().removesuffix(".txt")
+    if nome.startswith("sinal_60hz_"):
+        return "Sinal qualquer"
+    return None
+
+
 @st.cache_data(show_spinner="Carregando arquivo TXT...")
-def carregar_txt(conteudo_arquivo):
+def carregar_txt(conteudo_arquivo, nome_arquivo):
     dados = pd.read_csv(
         BytesIO(conteudo_arquivo),
         sep=r"\s{2,}",
@@ -41,15 +48,19 @@ def carregar_txt(conteudo_arquivo):
         dados[coluna] = pd.to_numeric(dados[coluna], errors="coerce")
 
     dados = dados.dropna(subset=COLUNAS_TXT).copy()
-    dados[COLUNA_CHAVE] = (
-        dados["H (cm)"].map(lambda valor: f"{valor:g}")
-        + " "
-        + dados["W (cm)"].map(lambda valor: f"{valor:g}".replace(".", ","))
-        + " "
-        + dados["N_DC"].map(lambda valor: f"{valor:g}")
-        + " "
-        + dados["N_AC"].map(lambda valor: f"{valor:g}")
-    )
+    nome_sintetico = nome_sinal_sintetico(nome_arquivo)
+    if nome_sintetico:
+        dados[COLUNA_CHAVE] = nome_sintetico
+    else:
+        dados[COLUNA_CHAVE] = (
+            dados["H (cm)"].map(lambda valor: f"{valor:g}")
+            + " "
+            + dados["W (cm)"].map(lambda valor: f"{valor:g}".replace(".", ","))
+            + " "
+            + dados["N_DC"].map(lambda valor: f"{valor:g}")
+            + " "
+            + dados["N_AC"].map(lambda valor: f"{valor:g}")
+        )
     return dados
 
 
@@ -65,7 +76,7 @@ if arquivo_txt is None:
 nome_arquivo = arquivo_txt.name
 
 try:
-    dados = carregar_txt(arquivo_txt.getvalue())
+    dados = carregar_txt(arquivo_txt.getvalue(), arquivo_txt.name)
 except Exception as erro:
     st.error(f"Erro ao ler o arquivo TXT: {erro}")
     st.stop()

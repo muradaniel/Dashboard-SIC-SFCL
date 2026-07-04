@@ -8,6 +8,7 @@ A aplicacao centraliza visualizacoes e calculos usados no estudo do limitador:
 
 - apresentacao do principio de funcionamento;
 - curva B-H e permeabilidade relativa;
+- visualizacao de corrente e tensao no dominio do tempo;
 - calculo RMS de sinais no dominio do tempo;
 - analise harmonica por FFT;
 - analise de otimizacao com resultados exportados do COMSOL.
@@ -20,9 +21,10 @@ dashboard/
 |-- requirements.txt
 |-- pages/
 |   |-- 02_Curva_BH.py
-|   |-- 03_RMS.py
-|   |-- 04_Harmonicos.py
-|   `-- 05_Otimizacao.py
+|   |-- 03_Visualizar_Sinal.py
+|   |-- 04_RMS.py
+|   |-- 05_Harmonicos.py
+|   |-- 06_Otimizacao.py
 |-- Dataset/
 |   |-- b_h_curve/
 |   |   `-- Curva_B_H_Sem_Perdas.txt
@@ -68,7 +70,7 @@ arquivo_bh = BASE_DIR / "Dataset" / "b_h_curve" / "Curva_B_H_Sem_Perdas.txt"
 pasta_otimizacao = BASE_DIR / "Dataset" / "optimization"
 ```
 
-As paginas RMS e Harmonicos nao monitoram uma pasta fixa. Elas aguardam o usuario selecionar manualmente um arquivo `.txt` exportado do COMSOL.
+As paginas Visualizar sinal, RMS e Harmonicos nao monitoram uma pasta fixa. Elas aguardam o usuario selecionar manualmente um arquivo `.txt` exportado do COMSOL.
 
 ## Paginas
 
@@ -84,21 +86,27 @@ Arquivo: `pages/02_Curva_BH.py`
 
 Le `Dataset/b_h_curve/Curva_B_H_Sem_Perdas.txt`, calcula a permeabilidade relativa a partir da derivada numerica `dB/dH` e exibe grafico e tabela.
 
-### 3. RMS
+### 3. Visualizar sinal
 
-Arquivo: `pages/03_RMS.py`
+Arquivo: `pages/03_Visualizar_Sinal.py`
+
+Aguarda o envio manual de um arquivo TXT exportado do COMSOL e exibe corrente de curto e queda de tensao no dominio do tempo em um unico grafico com eixo secundario para tensao.
+
+### 4. RMS
+
+Arquivo: `pages/04_RMS.py`
 
 Aguarda o envio manual de um arquivo TXT exportado do COMSOL pelo seletor de arquivos. Depois do carregamento, permite escolher a combinacao e as colunas de tempo/sinal, calcula o RMS total e plota o sinal com linha de RMS.
 
-### 4. Harmonicos
+### 5. Harmonicos
 
-Arquivo: `pages/04_Harmonicos.py`
+Arquivo: `pages/05_Harmonicos.py`
 
 Aguarda o envio manual de um arquivo TXT exportado do COMSOL pelo seletor de arquivos. Depois do carregamento, permite escolher a combinacao e as colunas de tempo/sinal, calcula FFT, amplitudes RMS por harmonico e percentual em relacao ao harmonico fundamental `n = 1`.
 
-### 5. Otimizacao
+### 6. Otimizacao
 
-Arquivo: `pages/05_Otimizacao.py`
+Arquivo: `pages/06_Otimizacao.py`
 
 Le arquivos `.txt` em `Dataset/optimization`, consolida maximos de queda de tensao e corrente de curto em janelas de tempo especificas, exibe a analise de viabilidade e inclui uma analise opcional de sensibilidade por modelo.
 

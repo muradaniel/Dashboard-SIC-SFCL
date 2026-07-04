@@ -3,122 +3,216 @@ from pathlib import Path
 import streamlit as st
 
 
-
 BASE_DIR = Path(__file__).resolve().parent
+GIF_CAMPO = BASE_DIR / "imagens" / "AnaliseDinamica.gif"
 
 st.set_page_config(
-    page_title="Limitador de Corrente de Curto-Circuito",
+    page_title="SIC-SFCL Dashboard",
     layout="wide",
-)
-
-st.title("Limitador de Corrente de Curto-Circuito Indutivo Saturado")
-st.caption(
-    "Dashboard de apoio ao desenvolvimento e análise de um limitador "
-    "indutivo de núcleo aberto com polarização DC."
 )
 
 st.markdown(
     """
-    Este projeto investiga um **limitador de corrente de curto-circuito**
-    baseado no comportamento magnético de um núcleo ferromagnético saturado.
-    Em regime permanente, a bobina DC mantém o núcleo em uma região de baixa
-    permeabilidade relativa, reduzindo a indutância equivalente e mantendo a
-    impedância inserida no sistema em um nível baixo. Durante uma falta, a
-    bobina AC associada ao circuito promove a dessaturação do núcleo, elevando
-    a permeabilidade magnética, aumentando a indutância e, consequentemente,
-    limitando a corrente de curto.
-
-    A proposta combina modelagem eletromagnética por elementos finitos,
-    análise de circuitos e exploração de dados em Python. As simulações foram
-    realizadas no COMSOL para avaliar diferentes geometrias, números de espiras
-    e condições de operação. Este dashboard organiza esses resultados para
-    facilitar a comparação entre configurações e apoiar a escolha de uma
-    solução que reduza a corrente de curto sem introduzir queda de tensão
-    excessiva em regime permanente.
-    """
+    <style>
+    .block-container {
+        padding-top: 1.8rem;
+        padding-bottom: 2.5rem;
+        max-width: none;
+    }
+    .hero {
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        border-radius: 14px;
+        padding: 2.2rem 2.4rem;
+        background:
+            linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.72)),
+            radial-gradient(circle at top right, rgba(220, 38, 38, 0.16), transparent 34%),
+            radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.16), transparent 36%);
+        box-shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+        margin-bottom: 1.35rem;
+    }
+    .eyebrow {
+        color: #2563eb;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.45rem;
+    }
+    .hero h1 {
+        color: #0f172a;
+        font-size: clamp(2rem, 4.5vw, 4rem);
+        line-height: 1.02;
+        margin: 0 0 0.85rem 0;
+        letter-spacing: 0;
+    }
+    .hero p {
+        color: #475569;
+        font-size: 1.08rem;
+        max-width: 780px;
+        margin: 0;
+    }
+    .metric-card {
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        border-radius: 10px;
+        padding: 1rem 1.1rem;
+        background: #ffffff;
+        min-height: 116px;
+    }
+    .metric-card small {
+        color: #64748b;
+        font-weight: 650;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .metric-card strong {
+        display: block;
+        color: #0f172a;
+        font-size: 1.75rem;
+        margin-top: 0.35rem;
+    }
+    .metric-card span {
+        color: #64748b;
+        font-size: 0.92rem;
+    }
+    .section-title {
+        color: #0f172a;
+        font-size: 1.22rem;
+        font-weight: 750;
+        margin: 1rem 0 0.4rem 0;
+    }
+    .tool-card {
+        border-left: 4px solid #2563eb;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 0.95rem 1rem;
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+        border-right: 1px solid rgba(15, 23, 42, 0.08);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        min-height: 116px;
+    }
+    .tool-card strong {
+        color: #0f172a;
+        display: block;
+        margin-bottom: 0.32rem;
+    }
+    .tool-card span {
+        color: #64748b;
+        font-size: 0.93rem;
+    }
+    .gif-frame {
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.10);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
-col1, col2, col3 = st.columns(3)
+st.markdown(
+    """
+    <section class="hero">
+        <div class="eyebrow">TCC | SIC-SFCL</div>
+        <h1>Limitador de corrente de curto-circuito</h1>
+        <p>
+            Dashboard para visualizar sinais, avaliar o material magnetico e comparar
+            geometrias que reduzem a corrente de falta sem impor queda de tensao excessiva.
+        </p>
+    </section>
+    """,
+    unsafe_allow_html=True,
+)
 
-with col1:
-    st.metric("Corrente nominal", "5 A RMS")
-    st.caption("Condição de operação em regime permanente.")
-
-with col2:
-    st.metric("Corrente prospectiva", "50 A RMS")
-    st.caption("Condição de curto-circuito sem limitação.")
-
-with col3:
-    st.metric("Alvo de limitação", "~10 A")
-    st.caption("Referência de corrente desejada durante a falta.")
-
-st.divider()
-
-col_texto, col_imagem = st.columns([1.05, 1.25], gap="large")
-
-with col_texto:
-    st.subheader("Princípio de funcionamento")
+m1, m2, m3 = st.columns(3)
+with m1:
     st.markdown(
         """
-        - **Bobina DC:** polariza o núcleo e busca mantê-lo saturado em regime
-          permanente, aproximando a permeabilidade relativa de 1.
-        - **Bobina AC:** fica associada ao circuito principal e atua no momento
-          do curto, quando a mudança do estado magnético aumenta a impedância.
-        - **Núcleo aberto:** exige avaliação numérica, pois a dispersão de fluxo
-          torna a formulação analítica simplificada pouco precisa.
-        - **Critério de desempenho:** limitar a corrente de falta mantendo a
-          queda de tensão dentro de uma faixa aceitável para qualidade de energia.
-        """
+        <div class="metric-card">
+            <small>Regime nominal</small>
+            <strong>5 A RMS</strong>
+            <span>Referencia de operacao antes da falta.</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-
-    st.subheader("Como o dashboard ajuda")
+with m2:
     st.markdown(
         """
-        As abas reúnem ferramentas para estudar a curva B-H, calcular valores
-        RMS, observar harmônicos e comparar resultados de otimização. A análise
-        de otimização filtra combinações por parâmetros geométricos e elétricos,
-        calcula os máximos nas janelas de tempo de interesse e destaca quais
-        configurações ficam mais próximas da região ideal de projeto.
+        <div class="metric-card">
+            <small>Curto prospectivo</small>
+            <strong>50 A RMS</strong>
+            <span>Cenario sem limitacao ativa.</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+with m3:
+    st.markdown(
         """
+        <div class="metric-card">
+            <small>Meta de projeto</small>
+            <strong>~10 A</strong>
+            <span>Alvo para corrente durante a falta.</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-with col_imagem:
-    st.image(
-        BASE_DIR / "imagens" / "AnaliseDinamica.gif",
-        caption="Campo magnético no domínio do tempo",
-        use_container_width=True,
+st.write("")
+
+col_visual, col_resumo = st.columns([1.35, 0.9], gap="large")
+
+with col_visual:
+    st.markdown('<div class="section-title">Campo magnetico no tempo</div>', unsafe_allow_html=True)
+    st.markdown('<div class="gif-frame">', unsafe_allow_html=True)
+    if GIF_CAMPO.exists():
+        st.image(GIF_CAMPO, use_container_width=True)
+    else:
+        st.info("Imagem da simulacao nao encontrada em imagens/AnaliseDinamica.gif.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col_resumo:
+    st.markdown('<div class="section-title">Ideia central</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="tool-card">
+            <strong>Nucleo saturado em regime permanente</strong>
+            <span>Baixa permeabilidade, baixa impedancia inserida no sistema.</span>
+        </div>
+        <br>
+        <div class="tool-card" style="border-left-color:#dc2626;">
+            <strong>Falta eletrica</strong>
+            <span>A mudanca magnetica aumenta a indutancia e limita a corrente.</span>
+        </div>
+        <br>
+        <div class="tool-card" style="border-left-color:#16a34a;">
+            <strong>Escolha da geometria</strong>
+            <span>Comparacao entre H, W, N_DC e N_AC para encontrar regioes viaveis.</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-st.divider()
+st.markdown('<div class="section-title">Ferramentas do dashboard</div>', unsafe_allow_html=True)
 
-st.subheader("Etapas de análise")
+cards = st.columns(5)
+ferramentas = [
+    ("Curva B-H", "Material e permeabilidade."),
+    ("Visualizar sinal", "Corrente e tensao no tempo."),
+    ("RMS", "Valor eficaz do sinal."),
+    ("Harmonicos", "FFT e percentual por ordem."),
+    ("Otimizacao", "Viabilidade e sensibilidade."),
+]
 
-etapas = st.columns(4)
-
-with etapas[0]:
-    st.markdown("**1. Curva B-H**")
-    st.write(
-        "Avalia a saturação do material ferromagnético e a variação da "
-        "permeabilidade magnética relativa."
-    )
-
-with etapas[1]:
-    st.markdown("**2. RMS**")
-    st.write(
-        "Calcula grandezas eficazes em regiões de tempo selecionadas para "
-        "comparar operação nominal e transitórios."
-    )
-
-with etapas[2]:
-    st.markdown("**3. Harmônicos**")
-    st.write(
-        "Aplica FFT para observar o conteúdo harmônico e a participação "
-        "relativa de cada componente."
-    )
-
-with etapas[3]:
-    st.markdown("**4. Otimização**")
-    st.write(
-        "Compara queda de tensão e corrente de curto para diferentes "
-        "combinações de H, W, N_DC e N_AC."
-    )
+for coluna, (titulo, descricao) in zip(cards, ferramentas):
+    with coluna:
+        st.markdown(
+            f"""
+            <div class="tool-card">
+                <strong>{titulo}</strong>
+                <span>{descricao}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
