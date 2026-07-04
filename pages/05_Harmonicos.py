@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -20,6 +21,14 @@ COLUNAS_TXT = [
     "Queda de Tensao (V)",
 ]
 COLUNA_CHAVE = "Chave"
+COLUNA_TEMPO = "Time (s)"
+EXEMPLOS = {
+    "Sinal senoidal 60 Hz": Path("Dataset/harmonics/sinal_60hz_senoidal.txt"),
+    "Sinal com harmonicos 3, 5 e 7": Path("Dataset/harmonics/sinal_60hz_com_harmonicos_3_5_7.txt"),
+    "Sinal quadrado 60 Hz": Path("Dataset/harmonics/sinal_60hz_quadrado.txt"),
+    "Sinal triangular 60 Hz": Path("Dataset/harmonics/sinal_60hz_triangular.txt"),
+    "Sinal retificado 60 Hz": Path("Dataset/harmonics/sinal_60hz_retificado.txt"),
+}
 
 
 def nome_sinal_sintetico(nome_arquivo):
@@ -27,6 +36,29 @@ def nome_sinal_sintetico(nome_arquivo):
     if nome.startswith("sinal_60hz_"):
         return "Sinal qualquer"
     return None
+
+
+def selecionar_arquivo():
+    st.subheader("Dados de entrada")
+    fonte = st.radio(
+        "Fonte dos dados",
+        ["Usar arquivo de exemplo", "Enviar arquivo"],
+        horizontal=True,
+    )
+
+    if fonte == "Enviar arquivo":
+        arquivo = st.file_uploader(
+            "Selecione um arquivo TXT exportado do COMSOL",
+            type=["txt"],
+        )
+        if arquivo is None:
+            st.warning("Selecione um arquivo TXT para iniciar a analise.")
+            st.stop()
+        return arquivo.getvalue(), arquivo.name
+
+    nome_exemplo = st.selectbox("Arquivo de exemplo", list(EXEMPLOS))
+    caminho = EXEMPLOS[nome_exemplo]
+    return caminho.read_bytes(), caminho.name
 
 
 @st.cache_data(show_spinner="Carregando arquivo TXT...")
@@ -60,19 +92,10 @@ def carregar_txt(conteudo_arquivo, nome_arquivo):
     return dados
 
 
-arquivo_txt = st.file_uploader(
-    "Selecione um arquivo TXT exportado do COMSOL",
-    type=["txt"],
-)
-
-if arquivo_txt is None:
-    st.warning("Selecione um arquivo TXT para iniciar a analise.")
-    st.stop()
-
-nome_arquivo = arquivo_txt.name
+conteudo_arquivo, nome_arquivo = selecionar_arquivo()
 
 try:
-    sinal = carregar_txt(arquivo_txt.getvalue(), arquivo_txt.name)
+    sinal = carregar_txt(conteudo_arquivo, nome_arquivo)
 except Exception as erro:
     st.error(f"Erro ao ler o arquivo TXT: {erro}")
     st.stop()
@@ -81,17 +104,17 @@ if sinal.empty:
     st.warning("O arquivo selecionado nao possui dados validos.")
     st.stop()
 
-with st.sidebar:
-    st.subheader("Selecao dos dados")
-    chaves = sorted(sinal[COLUNA_CHAVE].unique())
-    chave_selecionada = st.selectbox("Combinacao", chaves)
+chaves = sorted(sinal[COLUNA_CHAVE].unique())
+if len(chaves) == 1:
+    chave_selecionada = chaves[0]
+else:
+    with st.sidebar:
+        st.subheader("Selecao dos dados")
+        chave_selecionada = st.selectbox("Combinacao", chaves)
 
+with st.sidebar:
     colunas_numericas = COLUNAS_TXT.copy()
-    coluna_tempo = st.selectbox(
-        "Coluna de tempo",
-        colunas_numericas,
-        index=colunas_numericas.index("Time (s)"),
-    )
+    coluna_tempo = COLUNA_TEMPO
     coluna_sinal = st.selectbox(
         "Coluna do sinal",
         colunas_numericas,
@@ -105,14 +128,6 @@ with st.sidebar:
         max_value=10000,
         value=1600,
         step=100,
-    )
-    frequencia_fundamental = st.number_input(
-        "Frequencia fundamental [Hz]",
-        min_value=1.0,
-        max_value=1000.0,
-        value=60.0,
-        step=1.0,
-        format="%.2f",
     )
     amplitude_minima = st.number_input(
         "Amplitude minima para destacar picos [RMS]",
@@ -168,6 +183,16 @@ mascara_positiva = fft_freq >= 0
 freq_positiva = fft_freq[mascara_positiva]
 rms_positiva = fft_rms[mascara_positiva]
 
+mascara_fundamental = freq_positiva > 0
+if not np.any(mascara_fundamental):
+    st.error("Nao foi possivel estimar a frequencia fundamental do sinal.")
+    st.stop()
+frequencia_fundamental = float(
+    freq_positiva[mascara_fundamental][
+        np.argmax(rms_positiva[mascara_fundamental])
+    ]
+)
+
 numero_max_harmonico = int(limite_freq // frequencia_fundamental)
 harmonicos = np.arange(0, numero_max_harmonico + 1)
 freq_harmonicas = harmonicos * frequencia_fundamental
@@ -195,7 +220,7 @@ st.success(f"Arquivo carregado: {nome_arquivo} | Combinacao: {chave_selecionada}
 col1, col2, col3 = st.columns(3)
 col1.metric("Pontos analisados", N)
 col2.metric("Amostragem estimada", f"{fs:.2f} Hz")
-col3.metric("Coluna analisada", coluna_sinal)
+col3.metric("Fundamental estimada", f"{frequencia_fundamental:.2f} Hz")
 
 fig_fft = go.Figure()
 fig_fft.add_trace(

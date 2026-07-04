@@ -70,7 +70,7 @@ fig.update_layout(
         side="right"
     ),
 
-    height=650,
+    height=780,
     template="plotly_white"
 )
 
@@ -80,4 +80,4 @@ with col1:
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
-    st.dataframe(df, use_container_width=True, height=650)
+    st.dataframe(df, use_container_width=True, height=780)

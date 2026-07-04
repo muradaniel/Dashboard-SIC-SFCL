@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -33,6 +34,11 @@ COLUNAS_PARAMETROS = ["H (cm)", "W (cm)", "N_DC", "N_AC"]
 COR_CORRENTE = "#DC2626"
 COR_TENSAO = "#0B4DDB"
 DASHES_CASOS = ["solid", "dash", "dot", "dashdot", "longdash", "longdashdot"]
+EXEMPLOS = {
+    "Sinal COMSOL - otimizacao 28A 16V": Path("Dataset/signal/otimizacao 28A 16V.txt"),
+    "Sinal senoidal 60 Hz": Path("Dataset/harmonics/sinal_60hz_senoidal.txt"),
+    "Sinal com harmonicos 3, 5 e 7": Path("Dataset/harmonics/sinal_60hz_com_harmonicos_3_5_7.txt"),
+}
 
 
 def nome_sinal_sintetico(nome_arquivo):
@@ -40,6 +46,29 @@ def nome_sinal_sintetico(nome_arquivo):
     if nome.startswith("sinal_60hz_"):
         return "Sinal qualquer"
     return None
+
+
+def selecionar_arquivo():
+    st.subheader("Dados de entrada")
+    fonte = st.radio(
+        "Fonte dos dados",
+        ["Usar arquivo de exemplo", "Enviar arquivo"],
+        horizontal=True,
+    )
+
+    if fonte == "Enviar arquivo":
+        arquivo = st.file_uploader(
+            "Selecione um arquivo TXT exportado do COMSOL",
+            type=["txt"],
+        )
+        if arquivo is None:
+            st.warning("Selecione um arquivo TXT para visualizar os sinais.")
+            st.stop()
+        return arquivo.getvalue(), arquivo.name
+
+    nome_exemplo = st.selectbox("Arquivo de exemplo", list(EXEMPLOS))
+    caminho = EXEMPLOS[nome_exemplo]
+    return caminho.read_bytes(), caminho.name
 
 
 @st.cache_data(show_spinner="Carregando arquivo TXT...")
@@ -84,17 +113,10 @@ def filtrar_sinal(dados, chave):
     return sinal[mascara_valida]
 
 
-arquivo_txt = st.file_uploader(
-    "Selecione um arquivo TXT exportado do COMSOL",
-    type=["txt"],
-)
-
-if arquivo_txt is None:
-    st.warning("Selecione um arquivo TXT para visualizar os sinais.")
-    st.stop()
+conteudo_arquivo, nome_arquivo = selecionar_arquivo()
 
 try:
-    dados = carregar_txt(arquivo_txt.getvalue(), arquivo_txt.name)
+    dados = carregar_txt(conteudo_arquivo, nome_arquivo)
 except Exception as erro:
     st.error(f"Erro ao ler o arquivo TXT: {erro}")
     st.stop()
@@ -103,14 +125,18 @@ if dados.empty:
     st.warning("O arquivo selecionado nao possui dados validos.")
     st.stop()
 
+chaves = sorted(dados[COLUNA_CHAVE].unique())
+
 with st.sidebar:
     st.header("Selecao")
-    chaves = sorted(dados[COLUNA_CHAVE].unique())
-    chaves_selecionadas = st.multiselect(
-        "Combinacoes",
-        chaves,
-        default=chaves[:1],
-    )
+    if len(chaves) == 1:
+        chaves_selecionadas = chaves
+    else:
+        chaves_selecionadas = st.multiselect(
+            "Combinacoes",
+            chaves,
+            default=chaves[:1],
+        )
 
     sinal_exibido = st.radio(
         "Sinal exibido",

@@ -20,6 +20,21 @@ st.set_page_config(
 st.title("Análise de Otimização")
 st.caption("Relação entre queda de tensão e corrente de curto-circuito")
 
+st.markdown(
+    """
+    **Como as simulações foram feitas**
+
+    Cada caso foi simulado por 3,5 ciclos da rede. O curto-circuito ocorre em 1,5 ciclo,
+    depois de um trecho inicial em regime normal. Antes do curto, o cálculo usa um passo
+    equivalente a 100 pontos por ciclo; depois do curto, o passo fica mais refinado, com
+    500 pontos por ciclo, para capturar melhor a transição e os picos.
+
+    Para comparar as geometrias, o pico de queda de tensão é medido entre `0.0100 s`
+    e `0.0300 s`. Já o pico de corrente de curto é medido entre `0.0437 s` e `0.0525 s`,
+    quando a resposta após a falta já está estabelecida na janela analisada.
+    """
+)
+
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 PASTA_DADOS = BASE_DIR / "Dataset" / "optimization"
@@ -297,7 +312,7 @@ with st.sidebar:
 
     destaques = []
     for indice_destaque in range(st.session_state.quantidade_destaques):
-        with st.expander(f"Destaque {indice_destaque + 1}", expanded=True):
+        with st.expander(f"Destaque {indice_destaque + 1}", expanded=False):
             parametro_destaque = st.selectbox(
                 "Parâmetro",
                 COLUNAS_PARAMETROS,
@@ -816,10 +831,10 @@ mostrar_sensibilidade_modelo = st.checkbox(
 )
 
 if mostrar_sensibilidade_modelo:
-    st.subheader("Analise de sensibilidade por modelo")
+    st.subheader("Análise de sensibilidade por modelo")
     st.caption(
-        "O modelo Ridge e treinado com todas as simulacoes carregadas. "
-        "A tabela por simulacao abaixo respeita os filtros atuais do dashboard."
+        "O modelo Ridge e treinado com todas as simulações carregadas. "
+        "A tabela por simulação abaixo respeita os filtros atuais do dashboard."
     )
 
     dados_modelo = dados_analise[
@@ -828,7 +843,7 @@ if mostrar_sensibilidade_modelo:
 
     if len(dados_modelo) < 8:
         st.warning(
-            "A analise precisa de pelo menos 8 simulacoes validas para treinar "
+            "A analise precisa de pelo menos 8 simulações validas para treinar "
             "um modelo com sensibilidade minimamente util."
         )
     else:
@@ -1004,14 +1019,14 @@ if mostrar_sensibilidade_modelo:
                 "N_AC": caso["N_AC"],
                 "Corrente real [A]": caso[COLUNA_CORRENTE],
                 "Queda real [V]": caso[COLUNA_TENSAO],
-                "Variavel dominante": COLUNAS_PARAMETROS[indice_dominante],
+                "Variável dominante": COLUNAS_PARAMETROS[indice_dominante],
                 "Ranking de influencia": " > ".join(
                     COLUNAS_PARAMETROS[i] for i in ordem_impacto
                 ),
                 "Mais afeta corrente": COLUNAS_PARAMETROS[indice_corrente],
-                "Contribuicao corrente [A]": contrib_corrente[indice, indice_corrente],
+                "Contribuição corrente [A]": contrib_corrente[indice, indice_corrente],
                 "Mais afeta queda": COLUNAS_PARAMETROS[indice_tensao],
-                "Contribuicao queda [V]": contrib_tensao[indice, indice_tensao],
+                "Contribuição queda [V]": contrib_tensao[indice, indice_tensao],
                 "Impacto combinado": contrib_combinada[indice, indice_dominante],
             })
 
@@ -1020,7 +1035,7 @@ if mostrar_sensibilidade_modelo:
             ascending=False,
         )
 
-        st.subheader("Sensibilidade especifica por simulacao")
+        st.subheader("Sensibilidade especifica por simulação")
         sensibilidade_casos_exibicao = sensibilidade_casos.copy()
         sensibilidade_casos_exibicao["H (cm)"] = sensibilidade_casos_exibicao["H (cm)"].round(0)
         sensibilidade_casos_exibicao["W (cm)"] = sensibilidade_casos_exibicao["W (cm)"].round(2)
@@ -1028,8 +1043,8 @@ if mostrar_sensibilidade_modelo:
         sensibilidade_casos_exibicao["N_AC"] = sensibilidade_casos_exibicao["N_AC"].round(0)
         sensibilidade_casos_exibicao["Corrente real [A]"] = sensibilidade_casos_exibicao["Corrente real [A]"].round(2)
         sensibilidade_casos_exibicao["Queda real [V]"] = sensibilidade_casos_exibicao["Queda real [V]"].round(2)
-        sensibilidade_casos_exibicao["Contribuicao corrente [A]"] = sensibilidade_casos_exibicao["Contribuicao corrente [A]"].round(3)
-        sensibilidade_casos_exibicao["Contribuicao queda [V]"] = sensibilidade_casos_exibicao["Contribuicao queda [V]"].round(3)
+        sensibilidade_casos_exibicao["Contribuição corrente [A]"] = sensibilidade_casos_exibicao["Contribuição corrente [A]"].round(3)
+        sensibilidade_casos_exibicao["Contribuição queda [V]"] = sensibilidade_casos_exibicao["Contribuição queda [V]"].round(3)
         sensibilidade_casos_exibicao["Impacto combinado"] = sensibilidade_casos_exibicao["Impacto combinado"].round(4)
         st.dataframe(
             sensibilidade_casos_exibicao,
@@ -1039,6 +1054,6 @@ if mostrar_sensibilidade_modelo:
 
         st.info(
             "Leitura da tabela: o modelo padroniza os parametros e estima a "
-            "contribuicao de cada variavel para corrente e queda em cada simulacao. "
+            "contribuicao de cada variavel para corrente e queda em cada simulação. "
             "O ranking mostra quais parametros mais pesaram naquele caso filtrado."
         )

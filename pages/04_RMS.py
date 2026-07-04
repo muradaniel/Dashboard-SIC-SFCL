@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -24,6 +25,11 @@ COLUNAS_TXT = [
     "Queda de Tensao (V)",
 ]
 COLUNA_CHAVE = "Chave"
+EXEMPLOS = {
+    "Tensao RMS": Path("Dataset/root_mean_square/Tensão RMS.csv"),
+    "Sinal COMSOL - otimizacao 28A 16V": Path("Dataset/signal/otimizacao 28A 16V.txt"),
+    "Sinal senoidal 60 Hz": Path("Dataset/harmonics/sinal_60hz_senoidal.txt"),
+}
 
 
 def nome_sinal_sintetico(nome_arquivo):
@@ -31,6 +37,29 @@ def nome_sinal_sintetico(nome_arquivo):
     if nome.startswith("sinal_60hz_"):
         return "Sinal qualquer"
     return None
+
+
+def selecionar_arquivo():
+    st.subheader("Dados de entrada")
+    fonte = st.radio(
+        "Fonte dos dados",
+        ["Usar arquivo de exemplo", "Enviar arquivo"],
+        horizontal=True,
+    )
+
+    if fonte == "Enviar arquivo":
+        arquivo = st.file_uploader(
+            "Selecione um arquivo TXT exportado do COMSOL ou CSV com separador ';'",
+            type=["txt", "csv"],
+        )
+        if arquivo is None:
+            st.warning("Selecione um arquivo para iniciar a analise.")
+            st.stop()
+        return arquivo.getvalue(), arquivo.name
+
+    nome_exemplo = st.selectbox("Arquivo de exemplo", list(EXEMPLOS))
+    caminho = EXEMPLOS[nome_exemplo]
+    return caminho.read_bytes(), caminho.name
 
 
 @st.cache_data(show_spinner="Carregando arquivo TXT...")
@@ -64,41 +93,67 @@ def carregar_txt(conteudo_arquivo, nome_arquivo):
     return dados
 
 
-arquivo_txt = st.file_uploader(
-    "Selecione um arquivo TXT exportado do COMSOL",
-    type=["txt"],
-)
+@st.cache_data(show_spinner="Carregando arquivo CSV...")
+def carregar_csv(conteudo_arquivo, nome_arquivo):
+    dados = pd.read_csv(BytesIO(conteudo_arquivo), sep=";")
+    for coluna in dados.columns:
+        dados[coluna] = pd.to_numeric(dados[coluna], errors="coerce")
+    dados = dados.dropna(how="all").copy()
+    dados[COLUNA_CHAVE] = nome_arquivo.removesuffix(".csv")
+    return dados
 
-if arquivo_txt is None:
-    st.warning("Selecione um arquivo TXT para iniciar a analise.")
-    st.stop()
 
-nome_arquivo = arquivo_txt.name
+def carregar_arquivo(conteudo_arquivo, nome_arquivo):
+    if nome_arquivo.lower().endswith(".csv"):
+        return carregar_csv(conteudo_arquivo, nome_arquivo)
+    return carregar_txt(conteudo_arquivo, nome_arquivo)
+
+
+conteudo_arquivo, nome_arquivo = selecionar_arquivo()
 
 try:
-    dados = carregar_txt(arquivo_txt.getvalue(), arquivo_txt.name)
+    dados = carregar_arquivo(conteudo_arquivo, nome_arquivo)
 except Exception as erro:
-    st.error(f"Erro ao ler o arquivo TXT: {erro}")
+    st.error(f"Erro ao ler o arquivo: {erro}")
     st.stop()
 
 if dados.empty:
     st.warning("O arquivo selecionado nao possui dados validos.")
     st.stop()
 
+chaves = sorted(dados[COLUNA_CHAVE].unique())
+if len(chaves) == 1:
+    chave_selecionada = chaves[0]
+else:
+    with st.sidebar:
+        st.subheader("Selecao dos dados")
+        chave_selecionada = st.selectbox("Combinacao", chaves)
+
 with st.sidebar:
-    st.subheader("Selecao dos dados")
-    chaves = sorted(dados[COLUNA_CHAVE].unique())
-    chave_selecionada = st.selectbox("Combinacao", chaves)
+    colunas_numericas = [
+        coluna
+        for coluna in dados.columns
+        if coluna != COLUNA_CHAVE and pd.api.types.is_numeric_dtype(dados[coluna])
+    ]
+    if not colunas_numericas:
+        st.error("O arquivo precisa ter pelo menos uma coluna numerica.")
+        st.stop()
 
-    colunas_numericas = COLUNAS_TXT.copy()
-    indice_tempo = colunas_numericas.index("Time (s)")
-    indice_sinal = colunas_numericas.index("Corrente de Curto (A)")
+    if "Time (s)" in colunas_numericas:
+        coluna_tempo = "Time (s)"
+    elif "Time" in colunas_numericas:
+        coluna_tempo = "Time"
+    else:
+        st.error("O arquivo precisa ter a coluna de tempo 'Time (s)' ou 'Time'.")
+        st.stop()
 
-    coluna_tempo = st.selectbox(
-        "Coluna de tempo",
-        colunas_numericas,
-        index=indice_tempo,
-    )
+    if "Corrente de Curto (A)" in colunas_numericas:
+        indice_sinal = colunas_numericas.index("Corrente de Curto (A)")
+    elif "Tensao" in colunas_numericas:
+        indice_sinal = colunas_numericas.index("Tensao")
+    else:
+        indice_sinal = min(1, len(colunas_numericas) - 1)
+
     coluna_sinal = st.selectbox(
         "Coluna do sinal",
         colunas_numericas,

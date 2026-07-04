@@ -1,10 +1,155 @@
 from pathlib import Path
+import base64
 
+import numpy as np
+import plotly.graph_objects as go
 import streamlit as st
 
 
 BASE_DIR = Path(__file__).resolve().parent
 GIF_CAMPO = BASE_DIR / "imagens" / "AnaliseDinamica.gif"
+
+
+def imagem_base64(caminho):
+    return base64.b64encode(caminho.read_bytes()).decode("ascii")
+
+
+def adicionar_cubo(fig, nome, centro, tamanho, cor, opacidade=1.0):
+    cx, cy, cz = centro
+    sx, sy, sz = tamanho
+    x0, x1 = cx - sx / 2, cx + sx / 2
+    y0, y1 = cy - sy / 2, cy + sy / 2
+    z0, z1 = cz - sz / 2, cz + sz / 2
+    vertices = np.array([
+        [x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0],
+        [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],
+    ])
+    faces = np.array([
+        [0, 1, 2], [0, 2, 3], [4, 6, 5], [4, 7, 6],
+        [0, 4, 5], [0, 5, 1], [1, 5, 6], [1, 6, 2],
+        [2, 6, 7], [2, 7, 3], [3, 7, 4], [3, 4, 0],
+    ])
+    fig.add_trace(go.Mesh3d(
+        x=vertices[:, 0],
+        y=vertices[:, 1],
+        z=vertices[:, 2],
+        i=faces[:, 0],
+        j=faces[:, 1],
+        k=faces[:, 2],
+        name=nome,
+        color=cor,
+        opacity=opacidade,
+        flatshading=True,
+        hovertemplate=f"{nome}<extra></extra>",
+    ))
+
+
+def criar_figura_limitador_3d():
+    fig = go.Figure()
+
+    adicionar_cubo(
+        fig,
+        "Nucleo de ferro",
+        (0, 0, 0),
+        (0.46, 0.46, 3.1),
+        "#5B6472",
+        0.96,
+    )
+
+    theta_fita = np.linspace(0, 16 * np.pi, 1400)
+    z_fita = np.linspace(-1.42, 1.42, theta_fita.size)
+    raio_fita = 0.38
+    meia_largura_fita = 0.18
+    theta_bordas = np.column_stack([
+        theta_fita - meia_largura_fita,
+        theta_fita + meia_largura_fita,
+    ])
+    z_bordas = np.column_stack([
+        z_fita - meia_largura_fita * 0.34,
+        z_fita + meia_largura_fita * 0.34,
+    ])
+    x_fita = (raio_fita * np.cos(theta_bordas)).ravel()
+    y_fita = (raio_fita * np.sin(theta_bordas)).ravel()
+    z_fita_malha = z_bordas.ravel()
+    faces_i = []
+    faces_j = []
+    faces_k = []
+    for indice in range(theta_fita.size - 1):
+        a = 2 * indice
+        b = a + 1
+        c = a + 2
+        d = a + 3
+        faces_i.extend([a, b])
+        faces_j.extend([c, d])
+        faces_k.extend([b, c])
+    fig.add_trace(go.Mesh3d(
+        x=x_fita,
+        y=y_fita,
+        z=z_fita_malha,
+        i=faces_i,
+        j=faces_j,
+        k=faces_k,
+        name="Enrolamento DC",
+        color="#2563EB",
+        opacity=0.96,
+        flatshading=True,
+        showlegend=True,
+        hovertemplate="Enrolamento DC<extra></extra>",
+    ))
+
+    theta_ac = np.linspace(0, 75 * np.pi, 3200)
+    z_ac = np.linspace(-1.55, 1.55, theta_ac.size)
+    raio_x_ac = 0.56
+    raio_y_ac = 0.56
+    x_ac = raio_x_ac * np.cos(theta_ac)
+    y_ac = raio_y_ac * np.sin(theta_ac)
+    fig.add_trace(go.Scatter3d(
+        x=x_ac,
+        y=y_ac,
+        z=z_ac,
+        mode="lines",
+        name="Enrolamento CA",
+        line=dict(color="#DC2626", width=5),
+        hovertemplate="Enrolamento CA<extra></extra>",
+    ))
+
+    for z_terminal in (-1.55, 1.55):
+        fig.add_trace(go.Scatter3d(
+            x=[0.56, 0.95],
+            y=[0.0, 0.0],
+            z=[z_terminal, z_terminal + (0.22 if z_terminal > 0 else -0.22)],
+            mode="lines",
+            showlegend=False,
+            line=dict(color="#DC2626", width=5),
+            hoverinfo="skip",
+        ))
+
+    fig.add_trace(go.Scatter3d(
+        x=[0, -0.72, 0.78],
+        y=[-0.64, -0.7, -0.72],
+        z=[1.68, 0.52, -0.25],
+        mode="text",
+        text=["Nucleo de ferro", "Enrolamento DC", "Enrolamento CA"],
+        textfont=dict(size=12, color="#0F172A"),
+        showlegend=False,
+        hoverinfo="skip",
+    ))
+
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            zaxis=dict(visible=False),
+            aspectmode="data",
+            camera=dict(eye=dict(x=1.8, y=2.2, z=1.15)),
+        ),
+        legend=dict(orientation="h", y=0.02, x=0.5, xanchor="center"),
+        margin=dict(l=0, r=0, t=8, b=0),
+        height=560,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+    return fig
 
 st.set_page_config(
     page_title="SIC-SFCL Dashboard",
@@ -99,11 +244,28 @@ st.markdown(
         color: #64748b;
         font-size: 0.93rem;
     }
-    .gif-frame {
+    .media-frame {
+        height: 560px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         border-radius: 14px;
         overflow: hidden;
         border: 1px solid rgba(15, 23, 42, 0.10);
         box-shadow: 0 18px 50px rgba(15, 23, 42, 0.10);
+        background: #ffffff;
+    }
+    .media-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+    div[data-testid="stPlotlyChart"],
+    .stPlotlyChart {
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     </style>
     """,
@@ -161,38 +323,50 @@ with m3:
 
 st.write("")
 
-col_visual, col_resumo = st.columns([1.35, 0.9], gap="large")
+try:
+    col_visual, col_modelo = st.columns(2, gap="large", vertical_alignment="center")
+except TypeError:
+    col_visual, col_modelo = st.columns(2, gap="large")
 
 with col_visual:
-    st.markdown('<div class="section-title">Campo magnetico no tempo</div>', unsafe_allow_html=True)
-    st.markdown('<div class="gif-frame">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title" style="text-align:center;">Campo magnetico no tempo</div>', unsafe_allow_html=True)
     if GIF_CAMPO.exists():
-        st.image(GIF_CAMPO, use_container_width=True)
+        gif_base64 = imagem_base64(GIF_CAMPO)
+        st.markdown(
+            f'<div class="media-frame"><img src="data:image/gif;base64,{gif_base64}" alt="Campo magnetico no tempo"></div>',
+            unsafe_allow_html=True,
+        )
     else:
         st.info("Imagem da simulacao nao encontrada em imagens/AnaliseDinamica.gif.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
-with col_resumo:
-    st.markdown('<div class="section-title">Ideia central</div>', unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div class="tool-card">
-            <strong>Nucleo saturado em regime permanente</strong>
-            <span>Baixa permeabilidade, baixa impedancia inserida no sistema.</span>
-        </div>
-        <br>
-        <div class="tool-card" style="border-left-color:#dc2626;">
-            <strong>Falta eletrica</strong>
-            <span>A mudanca magnetica aumenta a indutancia e limita a corrente.</span>
-        </div>
-        <br>
-        <div class="tool-card" style="border-left-color:#16a34a;">
-            <strong>Escolha da geometria</strong>
-            <span>Comparacao entre H, W, N_DC e N_AC para encontrar regioes viaveis.</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
+with col_modelo:
+    st.markdown('<div class="section-title" style="text-align:center;">Esboco 3D do limitador</div>', unsafe_allow_html=True)
+    st.plotly_chart(
+        criar_figura_limitador_3d(),
+        use_container_width=True,
+        config={"scrollZoom": True, "displaylogo": False},
     )
+
+st.markdown('<div class="section-title">Ideia central</div>', unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="tool-card">
+        <strong>Nucleo saturado em regime permanente</strong>
+        <span>Baixa permeabilidade, baixa impedancia inserida no sistema.</span>
+    </div>
+    <br>
+    <div class="tool-card" style="border-left-color:#dc2626;">
+        <strong>Falta eletrica</strong>
+        <span>A mudanca magnetica aumenta a indutancia e limita a corrente.</span>
+    </div>
+    <br>
+    <div class="tool-card" style="border-left-color:#16a34a;">
+        <strong>Escolha da geometria</strong>
+        <span>Comparacao entre H, W, N_DC e N_AC para encontrar regioes viaveis.</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown('<div class="section-title">Ferramentas do dashboard</div>', unsafe_allow_html=True)
 
