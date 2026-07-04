@@ -4,6 +4,7 @@ import base64
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
+from dashboard_footer import mostrar_rodape
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -155,6 +156,8 @@ st.set_page_config(
     page_title="SIC-SFCL Dashboard",
     layout="wide",
 )
+
+mostrar_rodape()
 
 st.markdown(
     """

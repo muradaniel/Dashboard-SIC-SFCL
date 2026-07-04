@@ -6,12 +6,15 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
+from dashboard_footer import mostrar_rodape
 
 
 st.set_page_config(
     page_title="Visualizar sinal",
     layout="wide",
 )
+
+mostrar_rodape()
 
 st.title("Visualizar sinal")
 st.caption("Corrente de curto e queda de tensao no dominio do tempo")

@@ -5,9 +5,11 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from dashboard_footer import mostrar_rodape
 
 
 st.set_page_config(page_title="Analise de Harmonicos", layout="wide")
+mostrar_rodape()
 st.title("Analise de Harmonicos - FFT")
 
 

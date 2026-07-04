@@ -10,6 +10,7 @@ from sklearn.metrics import r2_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from dashboard_footer import mostrar_rodape
 
 
 st.set_page_config(
@@ -17,21 +18,21 @@ st.set_page_config(
     layout="wide"
 )
 
+mostrar_rodape()
+
 st.title("Análise de Otimização")
 st.caption("Relação entre queda de tensão e corrente de curto-circuito")
 
 st.markdown(
     """
-    **Como as simulações foram feitas**
+    **Observação sobre as simulações**
 
-    Cada caso foi simulado por 3,5 ciclos da rede. O curto-circuito ocorre em 1,5 ciclo,
-    depois de um trecho inicial em regime normal. Antes do curto, o cálculo usa um passo
-    equivalente a 100 pontos por ciclo; depois do curto, o passo fica mais refinado, com
-    500 pontos por ciclo, para capturar melhor a transição e os picos.
+    As simulações foram realizadas com tempo total de 3,5 ciclos da rede. O curto-circuito
+    ocorre em 2 ciclos, com corrente prospectiva de aproximadamente 70 A.
 
-    Para comparar as geometrias, o pico de queda de tensão é medido entre `0.0100 s`
-    e `0.0300 s`. Já o pico de corrente de curto é medido entre `0.0437 s` e `0.0525 s`,
-    quando a resposta após a falta já está estabelecida na janela analisada.
+    Para a análise dos resultados, foi aplicado um filtro em janelas específicas de tempo:
+    a queda de tensão é avaliada de `0.0100 s` a `0.0300 s`, enquanto a corrente de curto
+    é avaliada de `0.0437 s` a `0.0525 s`.
     """
 )
 
@@ -47,6 +48,8 @@ COLUNAS_PARAMETROS = ["H (cm)", "W (cm)", "N_DC", "N_AC"]
 
 REGIAO_ANALISE_TEMPO_TENSAO = (0.01, 0.03)
 REGIAO_ANALISE_TEMPO_CORRENTE = (0.0437, 0.0525)
+CORRENTE_PROSPECTIVA_PICO = 70.0
+TENSAO_ENTRADA_PICO = 127 * np.sqrt(2)
 
 
 def hex_para_rgb(cor):
@@ -481,6 +484,12 @@ dados_filtrados.loc[indices_ranking, "Posição no ranking"] = np.arange(
 dados_filtrados["Posição no ranking"] = (
     dados_filtrados["Posição no ranking"].astype(int)
 )
+dados_filtrados["Reducao da corrente [%]"] = (
+    1 - dados_filtrados[COLUNA_CORRENTE] / CORRENTE_PROSPECTIVA_PICO
+) * 100
+dados_filtrados["Queda de tensao [%]"] = (
+    dados_filtrados[COLUNA_TENSAO] / TENSAO_ENTRADA_PICO
+) * 100
 
 indice_mais_proximo = distancia_regiao_ideal.idxmin()
 combinacao_mais_proxima = dados_filtrados.loc[indice_mais_proximo]
@@ -527,6 +536,8 @@ fig.add_trace(
                 "N_AC",
                 "Distância até a região ideal",
                 "Posição no ranking",
+                "Reducao da corrente [%]",
+                "Queda de tensao [%]",
             ]
         ],
         marker=dict(
@@ -543,7 +554,9 @@ fig.add_trace(
             "N_AC: %{customdata[4]:.0f}<br>"
             "Posição no ranking: %{customdata[6]:.0f}º<br>"
             "Queda de tensão: %{x:.2f} V<br>"
+            "Queda percentual: %{customdata[8]:.2f}%<br>"
             "Corrente de curto: %{y:.2f} A<br>"
+            "Limitacao: %{customdata[7]:.1f}%<br>"
             "Distância até a região ideal: %{customdata[5]:.4f}"
             "<extra></extra>"
         ),
@@ -764,6 +777,8 @@ if mostrar_small_multiples:
                             "N_DC",
                             "N_AC",
                             "Distância até a região ideal",
+                            "Reducao da corrente [%]",
+                            "Queda de tensao [%]",
                         ]
                     ],
                     marker=dict(
@@ -788,7 +803,9 @@ if mostrar_small_multiples:
                         "N_DC: %{customdata[3]:.0f}<br>"
                         "N_AC: %{customdata[4]:.0f}<br>"
                         "Queda: %{x:.2f} V<br>"
+                        "Queda percentual: %{customdata[7]:.2f}%<br>"
                         "Corrente: %{y:.2f} A<br>"
+                        "Limitacao: %{customdata[6]:.1f}%<br>"
                         "Distância: %{customdata[5]:.4f}"
                         "<extra></extra>"
                     ),

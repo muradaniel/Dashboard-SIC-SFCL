@@ -4,6 +4,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
 from scipy.constants import mu_0
+from dashboard_footer import mostrar_rodape
 
 st.set_page_config(page_title="Curva B-H e μr", layout="wide")
 
@@ -17,6 +18,8 @@ df = pd.read_csv(
     sep=r"\s+",
     engine="python"
 )
+
+mostrar_rodape()
 
 df.columns = ["H", "B"]
 
