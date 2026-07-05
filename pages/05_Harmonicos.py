@@ -6,11 +6,34 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from dashboard_footer import mostrar_rodape
+ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
 
-st.set_page_config(page_title="Analise de Harmonicos", layout="wide")
+st.set_page_config(page_title="Analise de Harmonicos", page_icon=str(ICON_PATH), layout="wide")
 mostrar_rodape()
 st.title("Analise de Harmonicos - FFT")
+
+st.markdown(
+    r"""
+    O objetivo principal desta pagina e calcular os harmonicos de corrente durante
+    o curto-circuito por meio da FFT. A forma geral da serie de Fourier pode ser
+    escrita como:
+
+    $$
+    x(t) = \frac{a_0}{2} + \sum_{n=1}^{\infty}
+    \left[a_n\cos(n\omega_0 t) + b_n\sin(n\omega_0 t)\right]
+    $$
+
+    A amplitude RMS de cada harmonico senoidal e dada por:
+
+    $$
+    X_{n,RMS} = \frac{X_{n,pico}}{\sqrt{2}}
+    $$
+
+    Assim, o dashboard destaca a amplitude RMS de cada ordem harmonica e o percentual
+    em relacao a fundamental.
+    """
+)
 
 
 COLUNAS_TXT = [

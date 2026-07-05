@@ -11,10 +11,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from dashboard_footer import mostrar_rodape
+ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
 
 st.set_page_config(
     page_title="Análise de Otimização",
+    page_icon=str(ICON_PATH),
     layout="wide"
 )
 
@@ -107,7 +109,10 @@ def carregar_dados(caminhos, datas_modificacao):
     ]
     quadros = []
 
-    for caminho in caminhos:
+    for ordem_arquivo, caminho in enumerate(caminhos):
+        if caminho.stat().st_size == 0:
+            continue
+
         quadro = pd.read_csv(
             caminho,
             sep=r"\s{2,}",
@@ -116,7 +121,11 @@ def carregar_dados(caminhos, datas_modificacao):
             header=None,
             names=nomes_colunas,
         )
+        quadro["Ordem arquivo"] = ordem_arquivo
         quadros.append(quadro)
+
+    if not quadros:
+        return pd.DataFrame(columns=[*nomes_colunas, COLUNA_CHAVE])
 
     dados = pd.concat(quadros, ignore_index=True)
     dados[COLUNA_CHAVE] = (
@@ -131,7 +140,12 @@ def carregar_dados(caminhos, datas_modificacao):
         + dados["N_AC"].map(lambda valor: f"{valor:g}")
     )
 
+    ultima_ordem_por_chave = dados.groupby(COLUNA_CHAVE)["Ordem arquivo"].transform("max")
+    dados = dados[dados["Ordem arquivo"] == ultima_ordem_por_chave].copy()
+    dados = dados.drop(columns=["Ordem arquivo"])
+
     return dados
+
 def preparar_dados(dados):
     colunas_obrigatorias = {
         COLUNA_TEMPO,
@@ -202,7 +216,10 @@ if not PASTA_DADOS.exists():
     st.error(f"Pasta de dados não encontrada: {PASTA_DADOS}")
     st.stop()
 
-arquivos_txt = tuple(sorted(PASTA_DADOS.glob("*.txt")))
+arquivos_txt = tuple(
+    arquivo for arquivo in sorted(PASTA_DADOS.glob("*.txt"))
+    if arquivo.stat().st_size > 0
+)
 
 if not arquivos_txt:
     st.error(f"Nenhum arquivo TXT encontrado em: {PASTA_DADOS}")
@@ -694,7 +711,7 @@ ranking_proximidade["Situação"] = np.where(
     "Fora da região ideal",
 )
 
-mostrar_tabela = st.checkbox("Mostrar ranking por proximidade")
+mostrar_tabela = st.checkbox("Mostrar ranking por proximidade", value=True)
 
 if mostrar_tabela:
     st.subheader("Ranking de proximidade com a região ideal")

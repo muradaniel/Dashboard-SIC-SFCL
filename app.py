@@ -9,6 +9,7 @@ from dashboard_footer import mostrar_rodape
 
 BASE_DIR = Path(__file__).resolve().parent
 GIF_CAMPO = BASE_DIR / "imagens" / "AnaliseDinamica.gif"
+ICON_PATH = BASE_DIR / "imagens" / "coil.png"
 
 
 def imagem_base64(caminho):
@@ -154,6 +155,7 @@ def criar_figura_limitador_3d():
 
 st.set_page_config(
     page_title="SIC-SFCL Dashboard",
+    page_icon=str(ICON_PATH),
     layout="wide",
 )
 
@@ -254,9 +256,9 @@ st.markdown(
         justify-content: center;
         border-radius: 14px;
         overflow: hidden;
-        border: 1px solid rgba(15, 23, 42, 0.10);
-        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.10);
-        background: #ffffff;
+        border: 0;
+        box-shadow: none;
+        background: transparent;
     }
     .media-frame img {
         width: 100%;
@@ -281,8 +283,8 @@ st.markdown(
         <div class="eyebrow">TCC | SIC-SFCL</div>
         <h1>Limitador de corrente de curto-circuito</h1>
         <p>
-            Dashboard para visualizar sinais, avaliar o material magnetico e comparar
-            geometrias que reduzem a corrente de falta sem impor queda de tensao excessiva.
+            Dashboard para analise de dados de um limitador de corrente de curto-circuito
+            de nucleo saturado e aberto, com tecnologia de supercondutores.
         </p>
     </section>
     """,
@@ -317,14 +319,32 @@ with m3:
         """
         <div class="metric-card">
             <small>Meta de projeto</small>
-            <strong>~10 A</strong>
-            <span>Alvo para corrente durante a falta.</span>
+            <strong>&ge;60%</strong>
+            <span>Reducao minima da corrente de curto-circuito.</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 st.write("")
+
+st.markdown('<div class="section-title">Sobre o projeto</div>', unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="tool-card">
+        <strong>Trabalho de Conclusao de Curso - UERJ</strong>
+        <span>
+            Este site apresenta as analises de dados de um TCC desenvolvido por alunos de
+            Engenharia Eletrica da Universidade do Estado do Rio de Janeiro. O dashboard
+            organiza resultados de simulacao, sinais no tempo, RMS, harmonicos, curva B-H
+            e estudos de otimizacao do limitador.
+            <br><br>
+            Autor: <a href="https://danielmurad.my.canva.site/site-daniel-murad" target="_blank">Daniel Murad</a>.
+        </span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 try:
     col_visual, col_modelo = st.columns(2, gap="large", vertical_alignment="center")
@@ -366,6 +386,16 @@ st.markdown(
     <div class="tool-card" style="border-left-color:#16a34a;">
         <strong>Escolha da geometria</strong>
         <span>Comparacao entre H, W, N_DC e N_AC para encontrar regioes viaveis.</span>
+    </div>
+    <br>
+    <div class="tool-card" style="border-left-color:#2563eb;">
+        <strong>Uso do supercondutor</strong>
+        <span>O enrolamento supercondutor permite conduzir correntes elevadas com menos espiras de saturacao, reduzindo volume e perdas.</span>
+    </div>
+    <br>
+    <div class="tool-card" style="border-left-color:#f59e0b;">
+        <strong>Objetivo economico</strong>
+        <span>O projeto busca reduzir perdas em regime permanente e tornar a limitacao de curto-circuito tecnicamente e economicamente viavel.</span>
     </div>
     """,
     unsafe_allow_html=True,

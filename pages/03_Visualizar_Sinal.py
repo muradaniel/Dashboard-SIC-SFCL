@@ -7,10 +7,12 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 from dashboard_footer import mostrar_rodape
+ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
 
 st.set_page_config(
     page_title="Visualizar sinal",
+    page_icon=str(ICON_PATH),
     layout="wide",
 )
 

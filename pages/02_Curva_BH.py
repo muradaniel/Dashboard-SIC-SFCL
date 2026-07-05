@@ -5,10 +5,29 @@ import plotly.graph_objects as go
 import numpy as np
 from scipy.constants import mu_0
 from dashboard_footer import mostrar_rodape
+ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
-st.set_page_config(page_title="Curva B-H e μr", layout="wide")
+st.set_page_config(page_title="Curva B-H e μr", page_icon=str(ICON_PATH), layout="wide")
 
 st.title("Curva B-H e Permeabilidade Relativa")
+
+st.markdown(
+    r"""
+    **Regimes de operacao**
+
+    Em regime permanente, o nucleo opera proximo da saturacao para manter baixa
+    permeabilidade e baixa impedancia inserida no circuito. Durante o curto-circuito,
+    a mudanca do ponto de operacao magnetico aumenta a impedancia equivalente e contribui
+    para limitar a corrente.
+
+    A curva B-H relaciona o campo magnetico $H$ com a densidade de fluxo $B$. A
+    permeabilidade incremental usada no grafico e calculada por:
+
+    $$
+    \mu_r = \frac{1}{\mu_0}\frac{dB}{dH}
+    $$
+    """
+)
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 

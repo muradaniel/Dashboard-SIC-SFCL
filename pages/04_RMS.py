@@ -6,16 +6,39 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from dashboard_footer import mostrar_rodape
+ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
 
 st.set_page_config(
     page_title="Analise RMS",
+    page_icon=str(ICON_PATH),
     layout="wide",
 )
 
 mostrar_rodape()
 
 st.title("Analise RMS de Sinais Eletricos")
+
+st.markdown(
+    r"""
+    A funcao principal desta pagina e calcular a tensao RMS em regime a partir do
+    sinal selecionado:
+
+    $$
+    V_{RMS} = \sqrt{\frac{1}{T}\int_0^T v^2(t)\,dt}
+    $$
+
+    Como criterio de projeto, considera-se que a queda maxima admissivel seja de 10% da entrada:
+
+    $$
+    V_{limite,RMS} = 0{,}10 \cdot 127 = 12{,}7\,V_{RMS}
+    $$
+
+    $$
+    V_{limite,pico} = 12{,}7\sqrt{2} \approx 18\,V
+    $$
+    """
+)
 
 
 COLUNAS_TXT = [
