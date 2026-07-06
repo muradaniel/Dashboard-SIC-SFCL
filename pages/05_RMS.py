@@ -233,10 +233,7 @@ fig.add_trace(
         mode="lines",
         name="Sinal selecionado",
         line=dict(width=2),
-        hovertemplate=(
-            "Tempo: %{x:.6f} s<br>"
-            "Sinal: %{y:.6f}<extra></extra>"
-        ),
+        hovertemplate="Sinal: %{y:.6f}<extra></extra>",
     )
 )
 fig.add_trace(
@@ -246,17 +243,14 @@ fig.add_trace(
         mode="lines",
         name=f"RMS total = {rms_total:.2f}",
         line=dict(width=3, dash="dash"),
-        hovertemplate=(
-            "Tempo: %{x:.6f} s<br>"
-            "RMS total: %{y:.2f}<extra></extra>"
-        ),
+        hovertemplate="RMS total: %{y:.2f}<extra></extra>",
     )
 )
 fig.update_layout(
     title="Analise RMS do sinal selecionado",
     xaxis_title=coluna_tempo,
     yaxis_title=coluna_sinal,
-    hovermode="x unified",
+    hovermode="closest",
     template="plotly_white",
     height=650,
     legend=dict(

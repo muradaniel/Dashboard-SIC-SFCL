@@ -39,6 +39,8 @@ COLUNAS_PARAMETROS = ["H (cm)", "W (cm)", "N_DC", "N_AC"]
 COR_CORRENTE = "#DC2626"
 COR_TENSAO = "#0B4DDB"
 DASHES_CASOS = ["solid", "dash", "dot", "dashdot", "longdash", "longdashdot"]
+CORRENTE_PROSPECTIVA_PICO = 70.0
+TENSAO_ENTRADA_PICO = 127 * np.sqrt(2)
 EXEMPLOS = {
     "Sinal COMSOL - otimizacao 28A 16V": Path("Dataset/signal/otimizacao 28A 16V.txt"),
     "Sinal senoidal 60 Hz": Path("Dataset/harmonics/sinal_60hz_senoidal.txt"),
@@ -225,11 +227,16 @@ for indice, (chave, sinal) in enumerate(sinais_por_chave.items()):
                 name=f"Corrente - {nome_curto}",
                 line=dict(color=COR_CORRENTE, width=2.4, dash=dash),
                 marker=dict(size=5),
-                customdata=np.repeat(chave, len(sinal)),
+                customdata=np.column_stack([
+                    np.repeat(chave, len(sinal)),
+                    (1 - sinal[COLUNA_CORRENTE].to_numpy() / CORRENTE_PROSPECTIVA_PICO) * 100,
+                    sinal[COLUNA_TENSAO].to_numpy() / TENSAO_ENTRADA_PICO * 100,
+                ]),
                 hovertemplate=(
-                    "Combinacao: %{customdata}<br>"
-                    "Tempo: %{x:.6f} s<br>"
-                    "Corrente: %{y:.4f} A<extra></extra>"
+                    "Combinacao: %{customdata[0]}<br>"
+                    "Corrente: %{y:.4f} A<br>"
+                    "Limitacao: %{customdata[1]:.1f}%<br>"
+                    "Queda percentual: %{customdata[2]:.2f}%<extra></extra>"
                 ),
             ),
             secondary_y=False,
@@ -244,11 +251,14 @@ for indice, (chave, sinal) in enumerate(sinais_por_chave.items()):
                 name=f"Tensao - {nome_curto}",
                 line=dict(color=COR_TENSAO, width=2.4, dash=dash),
                 marker=dict(size=5),
-                customdata=np.repeat(chave, len(sinal)),
+                customdata=np.column_stack([
+                    np.repeat(chave, len(sinal)),
+                    sinal[COLUNA_TENSAO].to_numpy() / TENSAO_ENTRADA_PICO * 100,
+                ]),
                 hovertemplate=(
-                    "Combinacao: %{customdata}<br>"
-                    "Tempo: %{x:.6f} s<br>"
-                    "Tensao: %{y:.4f} V<extra></extra>"
+                    "Combinacao: %{customdata[0]}<br>"
+                    "Tensao: %{y:.4f} V<br>"
+                    "Queda percentual: %{customdata[1]:.2f}%<extra></extra>"
                 ),
             ),
             secondary_y=True,
@@ -258,7 +268,7 @@ fig.update_layout(
     title=f"Sinais no dominio do tempo | {faixa_tempo[0]:.3f} a {faixa_tempo[1]:.3f} s",
     template="plotly_white",
     height=720,
-    hovermode="x unified",
+    hovermode="closest",
     legend=dict(
         orientation="h",
         yanchor="bottom",

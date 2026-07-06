@@ -51,7 +51,7 @@ def criar_figura_limitador_3d():
 
     adicionar_cubo(
         fig,
-        "Nucleo de ferro",
+        "Núcleo de ferro",
         (0, 0, 0),
         (0.46, 0.46, 3.1),
         "#5B6472",
@@ -131,7 +131,7 @@ def criar_figura_limitador_3d():
         y=[-0.64, -0.7, -0.72],
         z=[1.68, 0.52, -0.25],
         mode="text",
-        text=["Nucleo de ferro", "Enrolamento DC", "Enrolamento CA"],
+        text=["Núcleo de ferro", "Enrolamento DC", "Enrolamento CA"],
         textfont=dict(size=12, color="#0F172A"),
         showlegend=False,
         hoverinfo="skip",
@@ -284,7 +284,7 @@ st.markdown(
         <h1>Limitador de corrente de curto-circuito</h1>
         <p>
             Dashboard para analise de dados de um limitador de corrente de curto-circuito
-            de nucleo saturado e aberto, com tecnologia de supercondutores.
+            de núcleo saturado e aberto, com tecnologia de supercondutores.
         </p>
     </section>
     """,
@@ -328,18 +328,27 @@ with m3:
 
 st.write("")
 
-st.markdown('<div class="section-title">Sobre o projeto</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Sobre o site</div>', unsafe_allow_html=True)
 st.markdown(
     """
     <div class="tool-card">
-        <strong>Trabalho de Conclusao de Curso - UERJ</strong>
+        <strong>Dashboard academico para o TCC de Engenharia Eletrica da UERJ</strong>
         <span>
-            Este site apresenta as analises de dados de um TCC desenvolvido por alunos de
-            Engenharia Eletrica da Universidade do Estado do Rio de Janeiro. O dashboard
-            organiza resultados de simulacao, sinais no tempo, RMS, harmonicos, curva B-H
-            e estudos de otimizacao do limitador.
+            Este site foi desenvolvido como parte de um Trabalho de Conclusao de Curso da
+            Universidade do Estado do Rio de Janeiro (UERJ), por alunos de Engenharia Eletrica.
+            O objetivo e reunir, em uma unica interface, as analises de dados do limitador de
+            corrente de curto-circuito de núcleo saturado e aberto com tecnologia de
+            supercondutores.
             <br><br>
-            Autor: <a href="https://danielmurad.my.canva.site/site-daniel-murad" target="_blank">Daniel Murad</a>.
+            Aqui sao avaliados sinais no dominio do tempo, valores RMS, componentes harmonicas,
+            curva B-H do material magnetico e resultados de otimizacao das geometrias simuladas.
+            O dashboard foi pensado para facilitar a interpretacao dos resultados do TCC e apoiar
+            a comparacao entre diferentes configuracoes do limitador.
+            <br><br>
+            Mais informacoes sobre Daniel Murad:
+            <a href="https://danielmurad.my.canva.site/site-daniel-murad" target="_blank">
+                site pessoal / portfolio
+            </a>.
         </span>
     </div>
     """,
@@ -363,7 +372,7 @@ with col_visual:
         st.info("Imagem da simulacao nao encontrada em imagens/AnaliseDinamica.gif.")
 
 with col_modelo:
-    st.markdown('<div class="section-title" style="text-align:center;">Esboco 3D do limitador</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title" style="text-align:center;">Esboço 3D do limitador</div>', unsafe_allow_html=True)
     st.plotly_chart(
         criar_figura_limitador_3d(),
         use_container_width=True,
@@ -374,7 +383,7 @@ st.markdown('<div class="section-title">Ideia central</div>', unsafe_allow_html=
 st.markdown(
     """
     <div class="tool-card">
-        <strong>Nucleo saturado em regime permanente</strong>
+        <strong>Núcleo saturado em regime permanente</strong>
         <span>Baixa permeabilidade, baixa impedancia inserida no sistema.</span>
     </div>
     <br>
@@ -392,11 +401,6 @@ st.markdown(
         <strong>Uso do supercondutor</strong>
         <span>O enrolamento supercondutor permite conduzir correntes elevadas com menos espiras de saturacao, reduzindo volume e perdas.</span>
     </div>
-    <br>
-    <div class="tool-card" style="border-left-color:#f59e0b;">
-        <strong>Objetivo economico</strong>
-        <span>O projeto busca reduzir perdas em regime permanente e tornar a limitacao de curto-circuito tecnicamente e economicamente viavel.</span>
-    </div>
     """,
     unsafe_allow_html=True,
 )
@@ -406,10 +410,10 @@ st.markdown('<div class="section-title">Ferramentas do dashboard</div>', unsafe_
 cards = st.columns(5)
 ferramentas = [
     ("Curva B-H", "Material e permeabilidade."),
+    ("Otimizacao", "Escolha do ponto de projeto."),
     ("Visualizar sinal", "Corrente e tensao no tempo."),
     ("RMS", "Valor eficaz do sinal."),
     ("Harmonicos", "FFT e percentual por ordem."),
-    ("Otimizacao", "Viabilidade e sensibilidade."),
 ]
 
 for coluna, (titulo, descricao) in zip(cards, ferramentas):

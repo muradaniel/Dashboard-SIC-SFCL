@@ -293,7 +293,7 @@ fig_fft.update_layout(
     title="Transformada Rapida de Fourier - Harmonicos em RMS",
     xaxis_title="Frequencia harmonica [Hz]",
     yaxis_title="Amplitude RMS",
-    hovermode="x unified",
+    hovermode="closest",
     template="plotly_white",
     height=600,
 )
@@ -344,7 +344,7 @@ fig_sinal.update_layout(
     title="Sinal selecionado",
     xaxis_title=coluna_tempo,
     yaxis_title=coluna_sinal,
-    hovermode="x unified",
+    hovermode="closest",
     template="plotly_white",
     height=500,
 )
