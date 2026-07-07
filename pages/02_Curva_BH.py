@@ -1,13 +1,18 @@
 from pathlib import Path
+import sys
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
 from scipy.constants import mu_0
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from dashboard_footer import mostrar_rodape
+
 ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
-st.set_page_config(page_title="Curva B-H e μr", page_icon=str(ICON_PATH), layout="wide")
 
 st.title("Curva B-H e Permeabilidade Relativa")
 
@@ -41,6 +46,9 @@ df = pd.read_csv(
 mostrar_rodape()
 
 df.columns = ["H", "B"]
+for coluna in ["H", "B"]:
+    df[coluna] = pd.to_numeric(df[coluna], errors="coerce")
+df = df.dropna(subset=["H", "B"]).copy()
 
 # 🔥 SUA LÓGICA ORIGINAL
 dBdH = np.gradient(df["B"], df["H"])

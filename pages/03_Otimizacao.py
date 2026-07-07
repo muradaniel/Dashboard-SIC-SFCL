@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 import colorsys
 import numpy as np
@@ -10,19 +11,19 @@ from sklearn.metrics import r2_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from dashboard_footer import mostrar_rodape
+
 ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
 
-st.set_page_config(
-    page_title="Análise de Otimização",
-    page_icon=str(ICON_PATH),
-    layout="wide"
-)
 
 mostrar_rodape()
 
-st.title("Análise de Otimização")
+st.title("Otimização - 1 Núcleo")
 st.caption("Relação entre queda de tensão e corrente de curto-circuito")
 
 st.markdown(
@@ -728,136 +729,6 @@ if mostrar_tabela:
         use_container_width=True,
         hide_index=True,
     )
-mostrar_small_multiples = st.checkbox("Mostrar small multiples", value=False)
-
-if mostrar_small_multiples:
-    st.subheader("Small multiples por parâmetro")
-
-    rotulos_parametros = {
-        "H (cm)": "H",
-        "W (cm)": "W",
-        "N_DC": "N_DC",
-        "N_AC": "N_AC",
-    }
-    colunas_small_multiples = st.columns(2)
-    parametro_separacao = colunas_small_multiples[0].selectbox(
-        "Separar gráficos por",
-        COLUNAS_PARAMETROS,
-        index=COLUNAS_PARAMETROS.index("N_DC"),
-        format_func=lambda coluna: rotulos_parametros.get(coluna, coluna),
-        key="parametro_separacao_small_multiples",
-    )
-    parametros_cor = [
-        coluna for coluna in COLUNAS_PARAMETROS
-        if coluna != parametro_separacao
-    ]
-    parametro_cor_small = colunas_small_multiples[1].selectbox(
-        "Colorir pontos por",
-        parametros_cor,
-        index=0,
-        format_func=lambda coluna: rotulos_parametros.get(coluna, coluna),
-        key="parametro_cor_small_multiples",
-    )
-
-    valores_separacao = sorted(dados_filtrados[parametro_separacao].unique())
-    cols_por_linha = 2
-    for inicio in range(0, len(valores_separacao), cols_por_linha):
-        colunas_graficos = st.columns(cols_por_linha)
-        for deslocamento, valor in enumerate(
-            valores_separacao[inicio:inicio + cols_por_linha]
-        ):
-            dados_painel = dados_filtrados[
-                dados_filtrados[parametro_separacao] == valor
-            ]
-            figura_small = go.Figure()
-            figura_small.add_shape(
-                type="rect",
-                x0=0,
-                x1=limite_tensao_ideal,
-                y0=0,
-                y1=limite_corrente_ideal,
-                fillcolor="rgba(255, 80, 80, 0.30)",
-                line=dict(width=0),
-                layer="below",
-            )
-            figura_small.add_trace(
-                go.Scatter(
-                    x=dados_painel[COLUNA_TENSAO],
-                    y=dados_painel[COLUNA_CORRENTE],
-                    mode="markers",
-                    name="Simulado",
-                    customdata=dados_painel[
-                        [
-                            COLUNA_CHAVE,
-                            "H (cm)",
-                            "W (cm)",
-                            "N_DC",
-                            "N_AC",
-                            "Distância até a região ideal",
-                            "Reducao da corrente [%]",
-                            "Queda de tensao [%]",
-                        ]
-                    ],
-                    marker=dict(
-                        size=10,
-                        color=dados_painel[parametro_cor_small],
-                        colorscale="Turbo",
-                        showscale=True,
-                        colorbar=dict(
-                            title=rotulos_parametros[parametro_cor_small],
-                            thickness=12,
-                        ),
-                        opacity=0.78,
-                        line=dict(
-                            color="rgba(255,255,255,0.75)",
-                            width=0.6,
-                        ),
-                    ),
-                    hovertemplate=(
-                        "Chave: %{customdata[0]}<br>"
-                        "H: %{customdata[1]:.0f} cm<br>"
-                        "W: %{customdata[2]:.2f} cm<br>"
-                        "N_DC: %{customdata[3]:.0f}<br>"
-                        "N_AC: %{customdata[4]:.0f}<br>"
-                        "Queda: %{x:.2f} V<br>"
-                        "Queda percentual: %{customdata[7]:.2f}%<br>"
-                        "Corrente: %{y:.2f} A<br>"
-                        "Limitacao: %{customdata[6]:.1f}%<br>"
-                        "Distância: %{customdata[5]:.4f}"
-                        "<extra></extra>"
-                    ),
-                )
-            )
-            figura_small.update_layout(
-                title=(
-                    f"{rotulos_parametros[parametro_separacao]} = "
-                    f"{formatar_valor_destaque(valor)}"
-                ),
-                template="plotly_white",
-                height=430,
-                margin=dict(t=60, r=35, b=55, l=65),
-                xaxis=dict(
-                    title="Queda de tensão (V)",
-                    range=range_x_global,
-                    dtick=5,
-                    gridcolor="rgba(0,0,0,0.12)",
-                    zeroline=True,
-                    zerolinecolor="rgba(0,0,0,0.35)",
-                ),
-                yaxis=dict(
-                    title="Corrente de curto (A)",
-                    range=range_y_global,
-                    dtick=5,
-                    gridcolor="rgba(0,0,0,0.12)",
-                    zeroline=True,
-                    zerolinecolor="rgba(0,0,0,0.35)",
-                ),
-                showlegend=False,
-            )
-            colunas_graficos[deslocamento].plotly_chart(
-                figura_small,
-                use_container_width=True,
-            )
 st.divider()
 mostrar_sensibilidade_modelo = st.checkbox(
     "Mostrar nova analise de sensibilidade por modelo",
@@ -877,7 +748,7 @@ if mostrar_sensibilidade_modelo:
 
     if len(dados_modelo) < 8:
         st.warning(
-            "A analise precisa de pelo menos 8 simulações validas para treinar "
+            "A analise precisa de pelo menos 8 simulações válidas para treinar "
             "um modelo com sensibilidade minimamente util."
         )
     else:
@@ -931,26 +802,26 @@ if mostrar_sensibilidade_modelo:
 
         sensibilidade_global = pd.DataFrame({
             "Parametro": COLUNAS_PARAMETROS,
-            "Influencia na corrente [%]": imp_corrente,
-            "Influencia na queda [%]": imp_tensao,
+            "Influência na corrente [%]": imp_corrente,
+            "Influência na queda [%]": imp_tensao,
             "Coeficiente corrente [A/std]": coef_corrente,
             "Coeficiente queda [V/std]": coef_tensao,
         })
-        sensibilidade_global["Influencia media [%]"] = (
-            sensibilidade_global["Influencia na corrente [%]"]
-            + sensibilidade_global["Influencia na queda [%]"]
+        sensibilidade_global["Influência media [%]"] = (
+            sensibilidade_global["Influência na corrente [%]"]
+            + sensibilidade_global["Influência na queda [%]"]
         ) / 2
         sensibilidade_global = sensibilidade_global.sort_values(
-            "Influencia media [%]",
+            "Influência media [%]",
             ascending=False,
         )
 
         parametro_corrente = sensibilidade_global.sort_values(
-            "Influencia na corrente [%]",
+            "Influência na corrente [%]",
             ascending=False,
         ).iloc[0]
         parametro_tensao = sensibilidade_global.sort_values(
-            "Influencia na queda [%]",
+            "Influência na queda [%]",
             ascending=False,
         ).iloc[0]
 
@@ -965,15 +836,15 @@ if mostrar_sensibilidade_modelo:
 
         c5, c6 = st.columns(2)
         c5.metric(
-            "Mais influencia a corrente",
+            "Mais influência a corrente",
             str(parametro_corrente["Parametro"]),
-            f"{parametro_corrente['Influencia na corrente [%]']:.1f}%",
+            f"{parametro_corrente['Influência na corrente [%]']:.1f}%",
             delta_color="off",
         )
         c6.metric(
-            "Mais influencia a queda",
+            "Mais influência a queda",
             str(parametro_tensao["Parametro"]),
-            f"{parametro_tensao['Influencia na queda [%]']:.1f}%",
+            f"{parametro_tensao['Influência na queda [%]']:.1f}%",
             delta_color="off",
         )
 
@@ -981,7 +852,7 @@ if mostrar_sensibilidade_modelo:
         fig_sensibilidade.add_trace(
             go.Bar(
                 y=sensibilidade_global["Parametro"],
-                x=sensibilidade_global["Influencia na corrente [%]"],
+                x=sensibilidade_global["Influência na corrente [%]"],
                 name="Corrente de curto",
                 orientation="h",
                 marker_color="#0B4DDB",
@@ -990,7 +861,7 @@ if mostrar_sensibilidade_modelo:
         fig_sensibilidade.add_trace(
             go.Bar(
                 y=sensibilidade_global["Parametro"],
-                x=sensibilidade_global["Influencia na queda [%]"],
+                x=sensibilidade_global["Influência na queda [%]"],
                 name="Queda de tensao",
                 orientation="h",
                 marker_color="#DC2626",
@@ -998,7 +869,7 @@ if mostrar_sensibilidade_modelo:
         )
         fig_sensibilidade.update_layout(
             title="Sensibilidade geral dos parametros",
-            xaxis_title="Influencia relativa dos coeficientes [%]",
+            xaxis_title="Influência relativa dos coeficientes [%]",
             yaxis_title="Parametro",
             barmode="group",
             template="plotly_white",
@@ -1013,11 +884,11 @@ if mostrar_sensibilidade_modelo:
         st.subheader("Tabela de sensibilidade geral")
         st.dataframe(
             sensibilidade_global.round({
-                "Influencia na corrente [%]": 2,
-                "Influencia na queda [%]": 2,
+                "Influência na corrente [%]": 2,
+                "Influência na queda [%]": 2,
                 "Coeficiente corrente [A/std]": 4,
                 "Coeficiente queda [V/std]": 4,
-                "Influencia media [%]": 2,
+                "Influência media [%]": 2,
             }),
             use_container_width=True,
             hide_index=True,
@@ -1054,7 +925,7 @@ if mostrar_sensibilidade_modelo:
                 "Corrente real [A]": caso[COLUNA_CORRENTE],
                 "Queda real [V]": caso[COLUNA_TENSAO],
                 "Variável dominante": COLUNAS_PARAMETROS[indice_dominante],
-                "Ranking de influencia": " > ".join(
+                "Ranking de influência": " > ".join(
                     COLUNAS_PARAMETROS[i] for i in ordem_impacto
                 ),
                 "Mais afeta corrente": COLUNAS_PARAMETROS[indice_corrente],
@@ -1069,7 +940,7 @@ if mostrar_sensibilidade_modelo:
             ascending=False,
         )
 
-        st.subheader("Sensibilidade especifica por simulação")
+        st.subheader("Sensibilidade específica por simulação")
         sensibilidade_casos_exibicao = sensibilidade_casos.copy()
         sensibilidade_casos_exibicao["H (cm)"] = sensibilidade_casos_exibicao["H (cm)"].round(0)
         sensibilidade_casos_exibicao["W (cm)"] = sensibilidade_casos_exibicao["W (cm)"].round(2)
@@ -1088,6 +959,6 @@ if mostrar_sensibilidade_modelo:
 
         st.info(
             "Leitura da tabela: o modelo padroniza os parametros e estima a "
-            "contribuicao de cada variavel para corrente e queda em cada simulação. "
+            "contribuição de cada variável para corrente e queda em cada simulação. "
             "O ranking mostra quais parametros mais pesaram naquele caso filtrado."
         )

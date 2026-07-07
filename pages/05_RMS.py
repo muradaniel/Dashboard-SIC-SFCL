@@ -1,19 +1,20 @@
 from io import BytesIO
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from dashboard_footer import mostrar_rodape
+
 ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
 
-st.set_page_config(
-    page_title="Analise RMS",
-    page_icon=str(ICON_PATH),
-    layout="wide",
-)
 
 mostrar_rodape()
 
@@ -51,10 +52,12 @@ COLUNAS_TXT = [
     "Queda de Tensao (V)",
 ]
 COLUNA_CHAVE = "Chave"
+BASE_DIR = Path(__file__).resolve().parents[1]
+PASTA_EXEMPLOS = BASE_DIR / "Dataset" / "root_mean_square"
 EXEMPLOS = {
-    "Tensao RMS": Path("Dataset/root_mean_square/Tensão RMS.csv"),
-    "Sinal COMSOL - otimizacao 28A 16V": Path("Dataset/signal/otimizacao 28A 16V.txt"),
-    "Sinal senoidal 60 Hz": Path("Dataset/harmonics/sinal_60hz_senoidal.txt"),
+    caminho.stem: caminho
+    for caminho in sorted(PASTA_EXEMPLOS.glob("*"))
+    if caminho.suffix.lower() in {".csv", ".txt"}
 }
 
 
@@ -62,30 +65,9 @@ def nome_sinal_sintetico(nome_arquivo):
     nome = nome_arquivo.lower().removesuffix(".txt")
     if nome.startswith("sinal_60hz_"):
         return "Sinal qualquer"
+    if nome == "exemplo_127_vrms":
+        return "Exemplo 127 VRMS"
     return None
-
-
-def selecionar_arquivo():
-    st.subheader("Dados de entrada")
-    fonte = st.radio(
-        "Fonte dos dados",
-        ["Usar arquivo de exemplo", "Enviar arquivo"],
-        horizontal=True,
-    )
-
-    if fonte == "Enviar arquivo":
-        arquivo = st.file_uploader(
-            "Selecione um arquivo TXT exportado do COMSOL ou CSV com separador ';'",
-            type=["txt", "csv"],
-        )
-        if arquivo is None:
-            st.warning("Selecione um arquivo para iniciar a analise.")
-            st.stop()
-        return arquivo.getvalue(), arquivo.name
-
-    nome_exemplo = st.selectbox("Arquivo de exemplo", list(EXEMPLOS))
-    caminho = EXEMPLOS[nome_exemplo]
-    return caminho.read_bytes(), caminho.name
 
 
 @st.cache_data(show_spinner="Carregando arquivo TXT...")
@@ -97,6 +79,7 @@ def carregar_txt(conteudo_arquivo, nome_arquivo):
         comment="%",
         header=None,
         names=COLUNAS_TXT,
+        usecols=range(len(COLUNAS_TXT)),
     )
 
     for coluna in COLUNAS_TXT:
@@ -134,6 +117,43 @@ def carregar_arquivo(conteudo_arquivo, nome_arquivo):
         return carregar_csv(conteudo_arquivo, nome_arquivo)
     return carregar_txt(conteudo_arquivo, nome_arquivo)
 
+
+def selecionar_arquivo():
+    with st.sidebar:
+        st.header("Entrada")
+        opcoes_entrada = ["Enviar arquivo"]
+        if EXEMPLOS:
+            opcoes_entrada.insert(0, "Usar exemplo")
+
+        modo_entrada = st.radio(
+            "Fonte dos dados",
+            opcoes_entrada,
+            horizontal=False,
+        )
+
+        if modo_entrada == "Usar exemplo":
+            nomes_exemplos = sorted(EXEMPLOS.keys())
+            indice_exemplo = 0
+            if "exemplo_127_VRMS" in nomes_exemplos:
+                indice_exemplo = nomes_exemplos.index("exemplo_127_VRMS")
+            nome_exemplo = st.selectbox(
+                "Arquivo de exemplo",
+                nomes_exemplos,
+                index=indice_exemplo,
+            )
+            caminho = EXEMPLOS[nome_exemplo]
+            return caminho.read_bytes(), caminho.name
+
+        arquivo = st.file_uploader(
+            "Selecione um arquivo CSV ou TXT",
+            type=["csv", "txt"],
+        )
+
+    if arquivo is None:
+        st.warning("Selecione um arquivo ou escolha um exemplo para iniciar a analise.")
+        st.stop()
+
+    return arquivo.getvalue(), arquivo.name
 
 conteudo_arquivo, nome_arquivo = selecionar_arquivo()
 
@@ -173,7 +193,9 @@ with st.sidebar:
         st.error("O arquivo precisa ter a coluna de tempo 'Time (s)' ou 'Time'.")
         st.stop()
 
-    if "Corrente de Curto (A)" in colunas_numericas:
+    if nome_sinal_sintetico(nome_arquivo) == "Exemplo 127 VRMS" and "Queda de Tensao (V)" in colunas_numericas:
+        indice_sinal = colunas_numericas.index("Queda de Tensao (V)")
+    elif "Corrente de Curto (A)" in colunas_numericas:
         indice_sinal = colunas_numericas.index("Corrente de Curto (A)")
     elif "Tensao" in colunas_numericas:
         indice_sinal = colunas_numericas.index("Tensao")
@@ -212,6 +234,31 @@ if len(tempo) < 2:
 ordem = np.argsort(tempo)
 tempo = tempo[ordem]
 sinal = sinal[ordem]
+
+tempo_minimo = float(np.min(tempo))
+tempo_maximo = float(np.max(tempo))
+if tempo_maximo > tempo_minimo:
+    passo_tempo = max((tempo_maximo - tempo_minimo) / 1000, 1e-9)
+    with st.sidebar:
+        st.subheader("Filtro de tempo")
+        faixa_tempo = st.slider(
+            "Intervalo analisado (s)",
+            min_value=tempo_minimo,
+            max_value=tempo_maximo,
+            value=(tempo_minimo, tempo_maximo),
+            step=passo_tempo,
+            format="%.6f",
+        )
+else:
+    faixa_tempo = (tempo_minimo, tempo_maximo)
+
+mascara_tempo = (tempo >= faixa_tempo[0]) & (tempo <= faixa_tempo[1])
+tempo = tempo[mascara_tempo]
+sinal = sinal[mascara_tempo]
+
+if len(tempo) < 2:
+    st.error("O intervalo de tempo selecionado precisa ter pelo menos dois pontos validos.")
+    st.stop()
 
 rms_total = np.sqrt(np.mean(sinal ** 2))
 rms_total_linha = np.full_like(sinal, rms_total)

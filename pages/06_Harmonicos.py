@@ -1,15 +1,20 @@
 from io import BytesIO
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from dashboard_footer import mostrar_rodape
+
 ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
 
-st.set_page_config(page_title="Analise de Harmonicos", page_icon=str(ICON_PATH), layout="wide")
 mostrar_rodape()
 st.title("Analise de Harmonicos - FFT")
 
@@ -60,30 +65,9 @@ def nome_sinal_sintetico(nome_arquivo):
     nome = nome_arquivo.lower().removesuffix(".txt")
     if nome.startswith("sinal_60hz_"):
         return "Sinal qualquer"
+    if nome == "exemplo_127_vrms":
+        return "Exemplo 127 VRMS"
     return None
-
-
-def selecionar_arquivo():
-    st.subheader("Dados de entrada")
-    fonte = st.radio(
-        "Fonte dos dados",
-        ["Usar arquivo de exemplo", "Enviar arquivo"],
-        horizontal=True,
-    )
-
-    if fonte == "Enviar arquivo":
-        arquivo = st.file_uploader(
-            "Selecione um arquivo TXT exportado do COMSOL",
-            type=["txt"],
-        )
-        if arquivo is None:
-            st.warning("Selecione um arquivo TXT para iniciar a analise.")
-            st.stop()
-        return arquivo.getvalue(), arquivo.name
-
-    nome_exemplo = st.selectbox("Arquivo de exemplo", list(EXEMPLOS))
-    caminho = EXEMPLOS[nome_exemplo]
-    return caminho.read_bytes(), caminho.name
 
 
 @st.cache_data(show_spinner="Carregando arquivo TXT...")
@@ -95,6 +79,7 @@ def carregar_txt(conteudo_arquivo, nome_arquivo):
         comment="%",
         header=None,
         names=COLUNAS_TXT,
+        usecols=range(len(COLUNAS_TXT)),
     )
 
     for coluna in COLUNAS_TXT:
@@ -115,6 +100,31 @@ def carregar_txt(conteudo_arquivo, nome_arquivo):
             + dados["N_AC"].map(lambda valor: f"{valor:g}")
         )
     return dados
+
+def selecionar_arquivo():
+    with st.sidebar:
+        st.header("Arquivo")
+        arquivo_enviado = st.file_uploader(
+            "Selecione um arquivo TXT do COMSOL",
+            type=["txt"],
+            key="upload_harmonicos",
+        )
+
+        if arquivo_enviado is not None:
+            return arquivo_enviado.getvalue(), arquivo_enviado.name
+
+        if EXEMPLOS:
+            nome_exemplo = st.selectbox(
+                "Arquivo de exemplo",
+                list(EXEMPLOS.keys()),
+                key="exemplo_harmonicos",
+            )
+            caminho_exemplo = EXEMPLOS[nome_exemplo]
+            return caminho_exemplo.read_bytes(), caminho_exemplo.name
+
+    st.info("Selecione um arquivo TXT para calcular os harm?nicos.")
+    st.stop()
+
 
 
 conteudo_arquivo, nome_arquivo = selecionar_arquivo()
@@ -185,6 +195,31 @@ ordem = np.argsort(tempo)
 tempo = tempo[ordem]
 vout = vout[ordem]
 
+tempo_minimo = float(np.min(tempo))
+tempo_maximo = float(np.max(tempo))
+if tempo_maximo > tempo_minimo:
+    passo_tempo = max((tempo_maximo - tempo_minimo) / 1000, 1e-9)
+    with st.sidebar:
+        st.subheader("Filtro de tempo")
+        faixa_tempo = st.slider(
+            "Intervalo analisado (s)",
+            min_value=tempo_minimo,
+            max_value=tempo_maximo,
+            value=(tempo_minimo, tempo_maximo),
+            step=passo_tempo,
+            format="%.6f",
+        )
+else:
+    faixa_tempo = (tempo_minimo, tempo_maximo)
+
+mascara_tempo = (tempo >= faixa_tempo[0]) & (tempo <= faixa_tempo[1])
+tempo = tempo[mascara_tempo]
+vout = vout[mascara_tempo]
+
+if len(tempo) < 2:
+    st.error("O intervalo de tempo selecionado precisa ter pelo menos dois pontos validos.")
+    st.stop()
+
 intervalos = np.diff(tempo)
 intervalos_validos = intervalos[intervalos > 0]
 
@@ -212,11 +247,27 @@ mascara_fundamental = freq_positiva > 0
 if not np.any(mascara_fundamental):
     st.error("Nao foi possivel estimar a frequencia fundamental do sinal.")
     st.stop()
-frequencia_fundamental = float(
+frequencia_fundamental_estimada = float(
     freq_positiva[mascara_fundamental][
         np.argmax(rms_positiva[mascara_fundamental])
     ]
 )
+frequencia_maxima_fundamental = max(float(np.max(freq_positiva)), 1e-6)
+frequencia_fundamental_padrao = min(
+    max(frequencia_fundamental_estimada, 1e-6),
+    frequencia_maxima_fundamental,
+)
+
+with st.sidebar:
+    frequencia_fundamental = st.number_input(
+        "Frequencia fundamental [Hz]",
+        min_value=1e-6,
+        max_value=frequencia_maxima_fundamental,
+        value=frequencia_fundamental_padrao,
+        step=1.0,
+        format="%.6f",
+        help="Use a frequencia estimada ou informe manualmente a fundamental para calcular as ordens harmonicas.",
+    )
 
 numero_max_harmonico = int(limite_freq // frequencia_fundamental)
 harmonicos = np.arange(0, numero_max_harmonico + 1)
@@ -245,7 +296,7 @@ st.success(f"Arquivo carregado: {nome_arquivo} | Combinacao: {chave_selecionada}
 col1, col2, col3 = st.columns(3)
 col1.metric("Pontos analisados", N)
 col2.metric("Amostragem estimada", f"{fs:.2f} Hz")
-col3.metric("Fundamental estimada", f"{frequencia_fundamental:.2f} Hz")
+col3.metric("Fundamental usada", f"{frequencia_fundamental:.2f} Hz", delta=f"Estimada: {frequencia_fundamental_estimada:.2f} Hz")
 
 fig_fft = go.Figure()
 fig_fft.add_trace(

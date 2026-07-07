@@ -1,20 +1,21 @@
 from io import BytesIO
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from dashboard_footer import mostrar_rodape
+
 ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
 
-st.set_page_config(
-    page_title="Visualizar sinal",
-    page_icon=str(ICON_PATH),
-    layout="wide",
-)
 
 mostrar_rodape()
 
@@ -41,10 +42,10 @@ COR_TENSAO = "#0B4DDB"
 DASHES_CASOS = ["solid", "dash", "dot", "dashdot", "longdash", "longdashdot"]
 CORRENTE_PROSPECTIVA_PICO = 70.0
 TENSAO_ENTRADA_PICO = 127 * np.sqrt(2)
+PASTA_EXEMPLOS = Path("Dataset/signal")
 EXEMPLOS = {
-    "Sinal COMSOL - otimizacao 28A 16V": Path("Dataset/signal/otimizacao 28A 16V.txt"),
-    "Sinal senoidal 60 Hz": Path("Dataset/harmonics/sinal_60hz_senoidal.txt"),
-    "Sinal com harmonicos 3, 5 e 7": Path("Dataset/harmonics/sinal_60hz_com_harmonicos_3_5_7.txt"),
+    caminho.stem: caminho
+    for caminho in sorted(PASTA_EXEMPLOS.glob("*.txt"))
 }
 
 
@@ -52,30 +53,9 @@ def nome_sinal_sintetico(nome_arquivo):
     nome = nome_arquivo.lower().removesuffix(".txt")
     if nome.startswith("sinal_60hz_"):
         return "Sinal qualquer"
+    if nome == "exemplo_127_vrms":
+        return "Exemplo 127 VRMS"
     return None
-
-
-def selecionar_arquivo():
-    st.subheader("Dados de entrada")
-    fonte = st.radio(
-        "Fonte dos dados",
-        ["Usar arquivo de exemplo", "Enviar arquivo"],
-        horizontal=True,
-    )
-
-    if fonte == "Enviar arquivo":
-        arquivo = st.file_uploader(
-            "Selecione um arquivo TXT exportado do COMSOL",
-            type=["txt"],
-        )
-        if arquivo is None:
-            st.warning("Selecione um arquivo TXT para visualizar os sinais.")
-            st.stop()
-        return arquivo.getvalue(), arquivo.name
-
-    nome_exemplo = st.selectbox("Arquivo de exemplo", list(EXEMPLOS))
-    caminho = EXEMPLOS[nome_exemplo]
-    return caminho.read_bytes(), caminho.name
 
 
 @st.cache_data(show_spinner="Carregando arquivo TXT...")
@@ -87,6 +67,7 @@ def carregar_txt(conteudo_arquivo, nome_arquivo):
         comment="%",
         header=None,
         names=COLUNAS_TXT,
+        usecols=range(len(COLUNAS_TXT)),
     )
 
     for coluna in COLUNAS_TXT:
@@ -118,6 +99,31 @@ def filtrar_sinal(dados, chave):
         & np.isfinite(sinal[COLUNA_TENSAO])
     )
     return sinal[mascara_valida]
+
+def selecionar_arquivo():
+    with st.sidebar:
+        st.header("Arquivo")
+        arquivo_enviado = st.file_uploader(
+            "Selecione um arquivo TXT do COMSOL",
+            type=["txt"],
+            key="upload_visualizar_sinal",
+        )
+
+        if arquivo_enviado is not None:
+            return arquivo_enviado.getvalue(), arquivo_enviado.name
+
+        if EXEMPLOS:
+            nome_exemplo = st.selectbox(
+                "Arquivo de exemplo",
+                list(EXEMPLOS.keys()),
+                key="exemplo_visualizar_sinal",
+            )
+            caminho_exemplo = EXEMPLOS[nome_exemplo]
+            return caminho_exemplo.read_bytes(), caminho_exemplo.name
+
+    st.info("Selecione um arquivo TXT para visualizar o sinal.")
+    st.stop()
+
 
 
 conteudo_arquivo, nome_arquivo = selecionar_arquivo()
@@ -197,7 +203,7 @@ if not sinais_por_chave:
 primeiro_sinal = next(iter(sinais_por_chave.values()))
 parametros = primeiro_sinal[COLUNAS_PARAMETROS].iloc[0]
 total_pontos = sum(len(sinal) for sinal in sinais_por_chave.values())
-sinais_sinteticos = all(chave == "Sinal qualquer" for chave in sinais_por_chave)
+sinais_sinteticos = all(chave in ["Sinal qualquer", "Exemplo 127 VRMS"] for chave in sinais_por_chave)
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Sinais", len(sinais_por_chave))
