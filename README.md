@@ -19,16 +19,26 @@ A aplicacao centraliza visualizacoes e calculos usados no estudo do limitador:
 dashboard/
 |-- app.py
 |-- requirements.txt
-|-- pages/
+|-- app_pages/
 |   |-- 02_Curva_BH.py
-|   |-- 03_Visualizar_Sinal.py
-|   |-- 04_RMS.py
-|   |-- 05_Harmonicos.py
-|   |-- 06_Otimizacao.py
+|   |-- 03_Otimizacao.py
+|   |-- 04_Visualizar_Sinal.py
+|   |-- 05_RMS.py
+|   |-- 06_Harmonicos.py
+|   |-- 07_Otimizacao_2_Nucleos_1_Bobina.py
+|   |-- 08_Otimizacao_2_Nucleos_2_Bobinas.py
+|   |-- 09_Otimizacao_1_Nucleo_2_Bobinas.py
+|   `-- otimizacao_base.py
 |-- Dataset/
 |   |-- b_h_curve/
 |   |   `-- Curva_B_H_Sem_Perdas.txt
-|   `-- optimization/
+|   |-- optimization_1_core_1_coil/
+|   |   `-- *.txt
+|   |-- optimization_1_core_2_coil/
+|   |   `-- *.txt
+|   |-- optimization_2_core_1_coil/
+|   |   `-- *.txt
+|   `-- optimization_2_core_2_coil/
 |       `-- *.txt
 `-- imagens/
     `-- AnaliseDinamica.gif
@@ -67,7 +77,7 @@ Exemplos:
 ```python
 BASE_DIR = Path(__file__).resolve().parents[1]
 arquivo_bh = BASE_DIR / "Dataset" / "b_h_curve" / "Curva_B_H_Sem_Perdas.txt"
-pasta_otimizacao = BASE_DIR / "Dataset" / "optimization"
+pasta_otimizacao = BASE_DIR / "Dataset" / "optimization_1_core_1_coil"
 ```
 
 As paginas Visualizar sinal, RMS e Harmonicos nao monitoram uma pasta fixa. Elas aguardam o usuario selecionar manualmente um arquivo `.txt` exportado do COMSOL.
@@ -82,44 +92,62 @@ Apresenta o projeto, o principio de operacao do limitador e a animacao `imagens/
 
 ### 2. Curva B-H
 
-Arquivo: `pages/02_Curva_BH.py`
+Arquivo: `app_pages/02_Curva_BH.py`
 
 Le `Dataset/b_h_curve/Curva_B_H_Sem_Perdas.txt`, calcula a permeabilidade relativa a partir da derivada numerica `dB/dH` e exibe grafico e tabela.
 
-### 3. Visualizar sinal
+### 3. Otimizacao - 1 Nucleo & 1 Bobina
 
-Arquivo: `pages/03_Visualizar_Sinal.py`
+Arquivo: `app_pages/03_Otimizacao.py`
 
-Aguarda o envio manual de um arquivo TXT exportado do COMSOL e exibe corrente de curto e queda de tensao no dominio do tempo em um unico grafico com eixo secundario para tensao.
+Le arquivos `.txt` em `Dataset/optimization_1_core_1_coil` e tambem aceita multiplos arquivos TXT carregados manualmente, consolida maximos de queda de tensao e corrente de curto em janelas de tempo especificas, exibe a analise de viabilidade e inclui uma analise opcional de sensibilidade por modelo.
 
-### 4. RMS
+### 4. Otimizacao - 1 Nucleo & 2 Bobinas
 
-Arquivo: `pages/04_RMS.py`
+Arquivo: `app_pages/09_Otimizacao_1_Nucleo_2_Bobinas.py`
 
-Aguarda o envio manual de um arquivo TXT exportado do COMSOL pelo seletor de arquivos. Depois do carregamento, permite escolher a combinacao e as colunas de tempo/sinal, calcula o RMS total e plota o sinal com linha de RMS.
+Usa a mesma interface, logica, graficos, filtros e comportamento da pagina de otimizacao de 1 nucleo e 1 bobina, lendo exclusivamente os arquivos `.txt` de `Dataset/optimization_1_core_2_coil`. O espaco do esboco 3D permanece em branco temporariamente.
 
-### 5. Harmonicos
+### 5. Otimizacao - 2 Nucleos & 1 Bobina
 
-Arquivo: `pages/05_Harmonicos.py`
+Arquivo: `app_pages/07_Otimizacao_2_Nucleos_1_Bobina.py`
 
-Aguarda o envio manual de um arquivo TXT exportado do COMSOL pelo seletor de arquivos. Depois do carregamento, permite escolher a combinacao e as colunas de tempo/sinal, calcula FFT, amplitudes RMS por harmonico e percentual em relacao ao harmonico fundamental `n = 1`.
+Usa a mesma interface, logica, graficos, filtros e comportamento da pagina de otimizacao de 1 nucleo e 1 bobina, lendo exclusivamente os arquivos `.txt` de `Dataset/optimization_2_core_1_coil`.
 
-### 6. Otimizacao
+### 6. Otimizacao - 2 Nucleos & 2 Bobinas
 
-Arquivo: `pages/06_Otimizacao.py`
+Arquivo: `app_pages/08_Otimizacao_2_Nucleos_2_Bobinas.py`
 
-Le arquivos `.txt` em `Dataset/optimization`, consolida maximos de queda de tensao e corrente de curto em janelas de tempo especificas, exibe a analise de viabilidade e inclui uma analise opcional de sensibilidade por modelo.
+Usa a mesma interface, logica, graficos, filtros e comportamento da pagina de otimizacao de 1 nucleo e 1 bobina, lendo exclusivamente os arquivos `.txt` de `Dataset/optimization_2_core_2_coil`.
 
-Filtros principais:
+Filtros principais das paginas de otimizacao:
 
-- arquivos lidos;
+- arquivos embutidos e arquivos carregados;
 - faixa de queda de tensao;
 - faixa de corrente de curto;
 - H, W, N_DC e N_AC;
 - destaques customizados por parametro/valor;
-- exibicao opcional da curva aproximada;
-- exibicao opcional de small multiples.
+- exibicao opcional da curva aproximada.
 
+### 6. Visualizar sinal
+
+
+Arquivo: `app_pages/04_Visualizar_Sinal.py`
+
+Aguarda o envio manual de um arquivo TXT exportado do COMSOL e exibe corrente de curto e queda de tensao no dominio do tempo em um unico grafico com eixo secundario para tensao.
+
+### 7. RMS
+
+Arquivo: `app_pages/05_RMS.py`
+
+Aguarda o envio manual de um arquivo TXT exportado do COMSOL pelo seletor de arquivos. Depois do carregamento, permite escolher a combinacao e as colunas de tempo/sinal, calcula o RMS total e plota o sinal com linha de RMS.
+
+### 8. Harmonicos
+
+Arquivo: `app_pages/06_Harmonicos.py`
+
+Aguarda o envio manual de um arquivo TXT exportado do COMSOL pelo seletor de arquivos. Depois do carregamento, permite escolher a combinacao e as colunas de tempo/sinal, calcula FFT, amplitudes RMS por harmonico e percentual em relacao ao harmonico fundamental 
+ = 1`.
 ## Deploy no Streamlit Cloud
 
 Para o deploy funcionar, mantenha:
@@ -130,3 +158,6 @@ Para o deploy funcionar, mantenha:
 - imagem da pagina inicial dentro de `imagens/`.
 
 Evite versionar arquivos `desktop.ini`, `__pycache__` e outros arquivos gerados pelo Windows/Python.
+
+
+

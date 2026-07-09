@@ -48,7 +48,7 @@ def obter_ultima_atualizacao():
     except Exception:
         pass
 
-    arquivos = [base_dir / "app.py", *sorted((base_dir / "pages").glob("*.py"))]
+    arquivos = [base_dir / "app.py", *sorted((base_dir / "app_pages").glob("*.py"))]
     datas = [arquivo.stat().st_mtime for arquivo in arquivos if arquivo.exists()]
     if not datas:
         return datetime.now().strftime("%d/%m/%Y %H:%M")

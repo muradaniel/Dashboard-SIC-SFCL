@@ -1,0 +1,14 @@
+from pathlib import Path
+import sys
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from app_pages.otimizacao_base import BASE_DIR, render_pagina_otimizacao
+
+render_pagina_otimizacao(
+    "Otimização - 2 Núcleos & 1 Bobina",
+    BASE_DIR / "Dataset" / "optimization_2_core_1_coil",
+    "otimizacao_2_core_1_coil",
+)
