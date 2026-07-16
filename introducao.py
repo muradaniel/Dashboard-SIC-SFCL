@@ -142,7 +142,7 @@ st.markdown(
         <h1>Limitador de corrente de curto-circuito</h1>
         <p>
             Dashboard para analise de dados de um limitador de corrente de curto-circuito
-            de núcleo saturado e aberto, com tecnologia de supercondutores.
+            de núcleo saturado e aberto, com tecnologia de supercondutores para saturação.
         </p>
     </section>
     """,
@@ -167,7 +167,7 @@ with m2:
         <div class="metric-card">
             <small>Curto prospectivo</small>
             <strong>50 A RMS</strong>
-            <span>Cenario sem limitacao ativa.</span>
+            <span>Cenário sem limitação ativa.</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -178,7 +178,7 @@ with m3:
         <div class="metric-card">
             <small>Meta de projeto</small>
             <strong>&ge;60%</strong>
-            <span>Reducao minima da corrente de curto-circuito.</span>
+            <span>Redução mínima da corrente de curto-circuito.</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -201,12 +201,12 @@ st.markdown(
     """
     <div class="tool-card">
         <strong>Núcleo saturado em regime permanente</strong>
-        <span>Baixa permeabilidade, baixa impedancia inserida no sistema.</span>
+        <span>Baixa permeabilidade, baixa impedância inserida no sistema.</span>
     </div>
     <br>
     <div class="tool-card" style="border-left-color:#dc2626;">
-        <strong>Falta eletrica</strong>
-        <span>A mudanca magnetica aumenta a indutancia e limita a corrente.</span>
+        <strong>Falta elétrica</strong>
+        <span>A mudança magnética aumenta a indutância e limita a corrente.</span>
     </div>
     <br>
     <div class="tool-card" style="border-left-color:#16a34a;">
