@@ -356,7 +356,7 @@ fig_fft.update_xaxes(
 )
 fig_fft.update_yaxes(showgrid=True)
 
-st.plotly_chart(fig_fft, use_container_width=True)
+st.plotly_chart(fig_fft, width="stretch")
 
 dados_fft = pd.DataFrame({
     "Harmonico": harmonicos,
@@ -371,7 +371,7 @@ st.dataframe(
         "Amplitude RMS": "{:.6f}",
         "Percentual em relacao ao n=1 [%]": "{:.2f}",
     }),
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )
 
@@ -402,4 +402,4 @@ fig_sinal.update_layout(
 fig_sinal.update_xaxes(showgrid=True)
 fig_sinal.update_yaxes(showgrid=True)
 
-st.plotly_chart(fig_sinal, use_container_width=True)
+st.plotly_chart(fig_sinal, width="stretch")

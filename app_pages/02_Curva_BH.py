@@ -107,7 +107,7 @@ fig.update_layout(
 col1, col2 = st.columns([0.8, 0.2])
 
 with col1:
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 with col2:
-    st.dataframe(df, use_container_width=True, height=780)
+    st.dataframe(df, width="stretch", height=780)

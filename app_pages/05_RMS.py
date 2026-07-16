@@ -311,4 +311,4 @@ fig.update_layout(
 fig.update_xaxes(showgrid=True)
 fig.update_yaxes(showgrid=True)
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
