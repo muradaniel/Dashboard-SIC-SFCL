@@ -225,10 +225,16 @@ def preparar_dados(dados):
     #     .max()
     # )
     
+    # maximos_corrente = (
+    #     dados_corrente
+    #     .groupby(COLUNA_CHAVE, as_index=False)[COLUNA_CORRENTE]
+    #     .agg(lambda x: x.iloc[x.abs().argmax()])
+    # )
+
     maximos_corrente = (
         dados_corrente
         .groupby(COLUNA_CHAVE, as_index=False)[COLUNA_CORRENTE]
-        .agg(lambda x: x.iloc[x.abs().argmax()])
+        .agg(lambda x: x.abs().max())
     )
 
     dados_consolidados = pd.merge(
