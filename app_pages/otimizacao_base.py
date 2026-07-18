@@ -37,6 +37,10 @@ CORRENTE_PROSPECTIVA_PICO = 70.71 # Dependa da simulação realizada
 TENSAO_ENTRADA_PICO = 127 * np.sqrt(2) # Dependa da simulação realizada
 TOTAL_CICLOS = 3 # Dependa da simulação realizada
 CICLO_CURTO = 1.5 # Dependa da simulação realizada
+LIMITACAO_DESEJADA = 60
+CORRENTE_MAXIMA_PICO = CORRENTE_PROSPECTIVA_PICO * (100 - LIMITACAO_DESEJADA) / 100
+QUEDA_DESEJADA = 10
+TENSAO_MAXIMA_PICO = TENSAO_ENTRADA_PICO * QUEDA_DESEJADA / 100
 
 
 def hex_para_rgb(cor):
@@ -474,13 +478,13 @@ def render_pagina_otimizacao(titulo, pasta_dados, chave_estado):
         limite_tensao_ideal = st.number_input(
             "Queda de tensão máxima (V)",
             min_value=0.0,
-            value=18.0,
+            value=TENSAO_MAXIMA_PICO,
             step=0.1,
         )
         limite_corrente_ideal = st.number_input(
             "Corrente de curto máxima (A)",
             min_value=0.0,
-            value=30.5,
+            value=CORRENTE_MAXIMA_PICO,
             step=0.1,
         )
     
