@@ -16,11 +16,11 @@ ICON_PATH = Path(__file__).resolve().parents[1] / "imagens" / "coil.png"
 
 
 mostrar_rodape()
-st.title("Analise de Harmonicos - FFT")
+st.title("Análise de Harmônicos - FFT")
 
 st.markdown(
     r"""
-    O objetivo principal desta pagina e calcular os harmonicos de corrente durante
+    O objetivo principal desta página e calcular os harmônicos de corrente durante
     o curto-circuito por meio da FFT. A forma geral da serie de Fourier pode ser
     escrita como:
 
@@ -29,14 +29,14 @@ st.markdown(
     \left[a_n\cos(n\omega_0 t) + b_n\sin(n\omega_0 t)\right]
     $$
 
-    A amplitude RMS de cada harmonico senoidal e dada por:
+    A amplitude RMS de cada harmônico senoidal e dada por:
 
     $$
     X_{n,RMS} = \frac{X_{n,pico}}{\sqrt{2}}
     $$
 
-    Assim, o dashboard destaca a amplitude RMS de cada ordem harmonica e o percentual
-    em relacao a fundamental.
+    Assim, o dashboard destaca a amplitude RMS de cada ordem harmônica e o percentual
+    em relação a fundamental.
     """
 )
 
@@ -53,17 +53,17 @@ COLUNAS_TXT = [
 COLUNA_CHAVE = "Chave"
 COLUNA_TEMPO = "Time (s)"
 EXEMPLOS = {
-    "Sinal senoidal 60 Hz": Path("Dataset/harmonics/sinal_60hz_senoidal.txt"),
-    "Sinal com harmonicos 3, 5 e 7": Path("Dataset/harmonics/sinal_60hz_com_harmonicos_3_5_7.txt"),
-    "Sinal quadrado 60 Hz": Path("Dataset/harmonics/sinal_60hz_quadrado.txt"),
-    "Sinal triangular 60 Hz": Path("Dataset/harmonics/sinal_60hz_triangular.txt"),
-    "Sinal retificado 60 Hz": Path("Dataset/harmonics/sinal_60hz_retificado.txt"),
+    "Sinal senoidal 60 Hz": Path("Dataset/harmonics/exemplo_sinal_60hz_senoidal.txt"),
+    "Sinal com harmonicos 3, 5 e 7": Path("Dataset/harmonics/exemplo_sinal_60hz_com_harmonicos_3_5_7.txt"),
+    "Sinal quadrado 60 Hz": Path("Dataset/harmonics/exemplo_sinal_60hz_quadrado.txt"),
+    "Sinal triangular 60 Hz": Path("Dataset/harmonics/exemplo_sinal_60hz_triangular.txt"),
+    "Sinal retificado 60 Hz": Path("Dataset/harmonics/exemplo_sinal_60hz_retificado.txt"),
 }
 
 
 def nome_sinal_sintetico(nome_arquivo):
     nome = nome_arquivo.lower().removesuffix(".txt")
-    if nome.startswith("sinal_60hz_"):
+    if nome.startswith("exemplo_sinal_60hz_"):
         return "Sinal qualquer"
     if nome == "exemplo_127_vrms":
         return "Exemplo 127 VRMS"

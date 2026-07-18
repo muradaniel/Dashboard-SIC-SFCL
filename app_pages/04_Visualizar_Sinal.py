@@ -51,7 +51,7 @@ EXEMPLOS = {
 
 def nome_sinal_sintetico(nome_arquivo):
     nome = nome_arquivo.lower().removesuffix(".txt")
-    if nome.startswith("sinal_60hz_"):
+    if nome.startswith("exemplosinal_60hz_"):
         return "Sinal qualquer"
     if nome == "exemplo_127_vrms":
         return "Exemplo 127 VRMS"
