@@ -23,6 +23,7 @@ paginas = {
         st.Page("app_pages/09_Otimizacao_1_Nucleo_2_Bobinas.py", title="B - 1 Núcleo & 1 Bobina DC & 2 Bobinas AC"),
         st.Page("app_pages/07_Otimizacao_2_Nucleos_1_Bobina.py", title="C - 2 Núcleos & 1 Bobina DC & 2 Bobinas AC"),
         st.Page("app_pages/08_Otimizacao_2_Nucleos_2_Bobinas.py", title="D - 2 Núcleos & 2 Bobinas DC & 2 Bobinas AC"),
+        st.Page("app_pages/10_Comparacao_Topologias.py", title="Comparação entre Topologias"),
     ],
 
     "📈 Análises dos Resultados": [
