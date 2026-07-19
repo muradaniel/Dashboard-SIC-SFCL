@@ -7,11 +7,11 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from sklearn.linear_model import Ridge
-from sklearn.metrics import r2_score
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
+# from sklearn.linear_model import Ridge
+# from sklearn.metrics import r2_score
+# from sklearn.pipeline import make_pipeline
+# from sklearn.preprocessing import StandardScaler
+# from sklearn.model_selection import train_test_split
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
