@@ -19,10 +19,10 @@ paginas = {
     ],
 
     "⚙️ Topologias": [
-        st.Page("app_pages/03_Otimizacao.py", title="A - 1 Núcleo & 1 Bobina DC & 1 Bobina AC"),
-        st.Page("app_pages/09_Otimizacao_1_Nucleo_2_Bobinas.py", title="B - 1 Núcleo & 1 Bobina DC & 2 Bobinas AC"),
-        st.Page("app_pages/07_Otimizacao_2_Nucleos_1_Bobina.py", title="C - 2 Núcleos & 1 Bobina DC & 2 Bobinas AC"),
-        st.Page("app_pages/08_Otimizacao_2_Nucleos_2_Bobinas.py", title="D - 2 Núcleos & 2 Bobinas DC & 2 Bobinas AC"),
+        st.Page("app_pages/03_Otimizacao_Topologia_A.py", title="Topologia A"),
+        st.Page("app_pages/09_Otimizacao_Topologia_B.py", title="Topologia B"),
+        st.Page("app_pages/07_Otimizacao_Topologia_C.py", title="Topologia C"),
+        st.Page("app_pages/08_Otimizacao_Topologia_D.py", title="Topologia D"),
         st.Page("app_pages/10_Comparacao_Topologias.py", title="Comparação entre Topologias"),
     ],
 

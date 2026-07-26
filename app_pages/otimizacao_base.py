@@ -223,18 +223,6 @@ def preparar_dados(dados):
         })
     )
 
-    # maximos_corrente = (
-    #     dados_corrente
-    #     .groupby(COLUNA_CHAVE, as_index=False)[COLUNA_CORRENTE]
-    #     .max()
-    # )
-    
-    # maximos_corrente = (
-    #     dados_corrente
-    #     .groupby(COLUNA_CHAVE, as_index=False)[COLUNA_CORRENTE]
-    #     .agg(lambda x: x.iloc[x.abs().argmax()])
-    # )
-
     maximos_corrente = (
         dados_corrente
         .groupby(COLUNA_CHAVE, as_index=False)[COLUNA_CORRENTE]

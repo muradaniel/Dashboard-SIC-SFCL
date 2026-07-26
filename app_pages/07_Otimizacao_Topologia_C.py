@@ -8,7 +8,7 @@ if str(ROOT_DIR) not in sys.path:
 from app_pages.otimizacao_base import BASE_DIR, render_pagina_otimizacao
 
 render_pagina_otimizacao(
-    "Otimização - 2 Núcleos & 2 Bobinas DC & 2 Bobinas AC",
-    BASE_DIR / "Dataset" / "2 Cores & 2 DC Coils & 2 AC Coils",
-    "otimizacao_2_core_2_coil",
+    "Topologia C - 2 Núcleos & 1 Bobina DC & 1 Bobina AC",
+    BASE_DIR / "Dataset" / "Topologia_C",
+    "otimizacao_2_core_1_coil",
 )
