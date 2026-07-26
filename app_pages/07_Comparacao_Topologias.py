@@ -29,10 +29,10 @@ from dashboard_footer import mostrar_rodape
 
 
 TOPOLOGIAS = (
-    ("Topologia A", BASE_DIR / "Dataset" / "1 Core & 1 DC Coil & 1 AC Coil"),
-    ("Topologia B", BASE_DIR / "Dataset" / "1 Core & 1 DC Coil & 2 AC Coils"),
-    ("Topologia C", BASE_DIR / "Dataset" / "2 Cores & 1 DC Coil & 2 AC Coils"),
-    ("Topologia D", BASE_DIR / "Dataset" / "2 Cores & 2 DC Coils & 2 AC Coils"),
+    ("Topologia A", BASE_DIR / "Dataset" / "Topologia_A"),
+    ("Topologia B", BASE_DIR / "Dataset" / "Topologia_B"),
+    ("Topologia C", BASE_DIR / "Dataset" / "Topologia_C"),
+    ("Topologia D", BASE_DIR / "Dataset" / "Topologia_D"),
 )
 
 

@@ -18,18 +18,18 @@ paginas = {
         st.Page("app_pages/02_Curva_BH.py", title="Curva B-H"),
     ],
 
-    "⚙️ Topologias": [
+    "⚙️ Otimização": [
         st.Page("app_pages/03_Otimizacao_Topologia_A.py", title="Topologia A"),
-        st.Page("app_pages/09_Otimizacao_Topologia_B.py", title="Topologia B"),
-        st.Page("app_pages/07_Otimizacao_Topologia_C.py", title="Topologia C"),
-        st.Page("app_pages/08_Otimizacao_Topologia_D.py", title="Topologia D"),
-        st.Page("app_pages/10_Comparacao_Topologias.py", title="Comparação entre Topologias"),
+        st.Page("app_pages/04_Otimizacao_Topologia_B.py", title="Topologia B"),
+        st.Page("app_pages/05_Otimizacao_Topologia_C.py", title="Topologia C"),
+        st.Page("app_pages/06_Otimizacao_Topologia_D.py", title="Topologia D"),
+        st.Page("app_pages/07_Comparacao_Topologias.py", title="Comparação entre Topologias"),
     ],
 
     "📈 Análises dos Resultados": [
-        st.Page("app_pages/04_Visualizar_Sinal.py", title="Visualizar Sinal"),
-        st.Page("app_pages/05_RMS.py", title="RMS"),
-        st.Page("app_pages/06_Harmonicos.py", title="Harmônicos"),
+        st.Page("app_pages/08_Visualizar_Sinal.py", title="Visualizar Sinal"),
+        st.Page("app_pages/09_RMS.py", title="RMS"),
+        st.Page("app_pages/10_Harmonicos.py", title="Harmônicos"),
     ]
 }
 
